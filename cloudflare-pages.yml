@@ -1,0 +1,10 @@
+build:
+  command: npm install && npm run build
+  directory: .
+
+functions:
+  directory: .
+
+deploy:
+  production:
+    branch: main
