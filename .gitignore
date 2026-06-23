@@ -1,5 +1,10 @@
 node_modules
 .next
+.open-next
+.dev.vars
+.wrangler
+.env*
+!.env.example
 out
 coverage
 .DS_Store

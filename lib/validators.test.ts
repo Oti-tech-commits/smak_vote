@@ -21,8 +21,7 @@ describe('Validators', () => {
 
     it('should validate voting token login', () => {
       const valid = loginSchema.safeParse({
-        token: 'voting-token-uuid-here',
-        password: ''
+        token: 'voting-token-uuid-here'
       });
       expect(valid.success).toBe(true);
     });

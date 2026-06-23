@@ -25,8 +25,16 @@ describe('Auth Helpers', () => {
     });
 
     it('should return profile for valid token', async () => {
-      const mockUser = { id: 'user-123', email: 'student@stmark.com' };
+      const mockUser = {
+        id: 'user-123',
+        email: 'student@stmark.com',
+        aud: 'authenticated',
+        created_at: '2024-01-01T00:00:00Z',
+        app_metadata: {},
+        user_metadata: {},
+      } as any;
       const mockProfile = { id: 'user-123', role: 'student' };
+
 
       vi.mocked(supabaseServer.auth.getUser).mockResolvedValueOnce({
         data: { user: mockUser },

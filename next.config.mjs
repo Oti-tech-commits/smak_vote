@@ -1,10 +1,12 @@
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
+
 const nextConfig = {
   reactStrictMode: true,
+  typedRoutes: true,
   experimental: {
     serverActions: {
       bodySizeLimit: '1mb'
-    },
-    typedRoutes: true
+    }
   },
   images: {
     remotePatterns: [
@@ -15,4 +17,9 @@ const nextConfig = {
     ]
   }
 };
+
 export default nextConfig;
+
+if (process.env.NODE_ENV === 'development') {
+  initOpenNextCloudflareForDev();
+}
