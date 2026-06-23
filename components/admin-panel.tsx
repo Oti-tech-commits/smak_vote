@@ -253,6 +253,30 @@ export function AdminPanel() {
       </Card>
 
       <Card>
+        <h2 className="text-2xl font-semibold text-slate-900">Registered Candidates</h2>
+        <div className="mt-6 space-y-3">
+          {candidates.length === 0 ? (
+            <p className="text-sm text-slate-600">No candidates registered yet.</p>
+          ) : (
+            candidates.map((candidate) => (
+              <div key={candidate.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex gap-4">
+                  {candidate.photo_url && (
+                    <img src={candidate.photo_url} alt={candidate.student_name} className="h-16 w-16 rounded-full object-cover" />
+                  )}
+                  <div className="flex-1">
+                    <p className="font-semibold text-slate-900">{candidate.student_name}</p>
+                    <p className="text-sm text-slate-600">Class: {candidate.class_name}</p>
+                    <p className="text-sm text-slate-600">Manifesto: {candidate.manifesto}</p>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+
+      <Card>
         <h2 className="text-2xl font-semibold text-slate-900">Create Voting Token</h2>
         <form className="grid gap-4 pt-6" onSubmit={createToken}>
           <div>
