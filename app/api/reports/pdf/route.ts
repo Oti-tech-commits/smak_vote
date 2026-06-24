@@ -20,14 +20,22 @@ export async function GET(request: Request) {
   const lineHeight = fontSize + 6;
   let y = page.getHeight() - 60;
 
-  page.drawText('St. Mark’s Prefect Voting Summary', {
+  page.drawText('St. Mark’s S.S. Naminya — Prefect Voting Summary', {
     x: 48,
     y,
-    size: 18,
+    size: 16,
     font: timesRomanFont,
-    color: rgb(0.14, 0.2, 0.32)
+    color: rgb(0.17, 0.25, 0.58)
   });
-  y -= 36;
+  y -= 20;
+  page.drawText('Desire to Excel', {
+    x: 48,
+    y,
+    size: 11,
+    font: timesRomanFont,
+    color: rgb(0.8, 0.43, 0.23)
+  });
+  y -= 30;
 
   elections?.forEach((election: { id: string; title: string; status: string; start_time: string; end_time: string }, index: number) => {
     page.drawText(`${index + 1}. ${election.title} (${election.status})`, {

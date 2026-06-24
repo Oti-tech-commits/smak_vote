@@ -102,6 +102,11 @@ export default function LoginPage() {
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-16 lg:px-8">
+      <div className="mb-8 flex flex-col items-center text-center">
+        <img src="/logo.png" alt="St. Mark’s S.S. Naminya crest" className="h-20 w-20 object-contain" />
+        <p className="mt-3 text-lg font-semibold text-slate-900">St. Mark’s S.S. Naminya</p>
+        <p className="text-xs font-medium uppercase tracking-[0.3em] text-accent-600">Desire to Excel</p>
+      </div>
       <Card>
         <div className="space-y-6">
           <div>
