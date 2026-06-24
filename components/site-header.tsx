@@ -1,26 +1,90 @@
-import Link from 'next/link';
+'use client';
 
-const navItems: Array<{ href: '/' | '/vote' | '/results' | '/admin' | '/officer'; label: string }> = [
-  { href: '/', label: 'Home' },
-  { href: '/vote', label: 'Vote' },
-  { href: '/results', label: 'Results' },
-  { href: '/admin', label: 'Admin' },
-  { href: '/officer', label: 'Officer' }
-];
+import type { Route } from 'next';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+import { supabaseClient } from '@/lib/supabaseClient';
+import { getSessionProfile, getVotingToken, signOut, type SessionProfile } from '@/lib/clientAuth';
+
+type NavItem = { href: Route; label: string };
+
+function navItemsFor(profile: SessionProfile | null, hasVotingToken: boolean): NavItem[] {
+  const items: NavItem[] = [{ href: '/', label: 'Home' }];
+
+  if (profile?.role === 'admin') {
+    items.push({ href: '/admin', label: 'Admin' }, { href: '/results', label: 'Results' });
+  } else if (profile?.role === 'officer') {
+    items.push({ href: '/officer', label: 'Officer' }, { href: '/results', label: 'Results' });
+  } else if (profile || hasVotingToken) {
+    items.push({ href: '/vote', label: 'Vote' }, { href: '/results', label: 'Results' });
+  }
+
+  return items;
+}
 
 export function SiteHeader() {
+  const router = useRouter();
+  const [profile, setProfile] = useState<SessionProfile | null>(null);
+  const [hasVotingToken, setHasVotingToken] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+
+  const refresh = useCallback(async () => {
+    const nextProfile = await getSessionProfile();
+    const votingToken = getVotingToken();
+    setProfile(nextProfile);
+    setHasVotingToken(Boolean(votingToken));
+    setAuthenticated(Boolean(nextProfile) || Boolean(votingToken));
+  }, []);
+
+  useEffect(() => {
+    refresh();
+    const { data } = supabaseClient.auth.onAuthStateChange(() => {
+      refresh();
+    });
+    return () => {
+      data.subscription.unsubscribe();
+    };
+  }, [refresh]);
+
+  async function handleLogout() {
+    await signOut();
+    await refresh();
+    router.push('/login');
+  }
+
+  const navItems = navItemsFor(profile, hasVotingToken);
+
   return (
     <header className="border-b border-slate-200 bg-white/90 backdrop-blur-lg">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
         <Link href="/" className="text-lg font-semibold text-slate-900">
           St. Mark’s Prefect Vote
         </Link>
-        <nav className="hidden items-center gap-4 md:flex">
+        <nav className="flex items-center gap-2 md:gap-4">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} className="rounded-full px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
               {item.label}
             </Link>
           ))}
+          {authenticated ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+            >
+              Logout
+            </button>
+          ) : (
+            <>
+              <Link href="/login" className="rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700">
+                Login
+              </Link>
+              <Link href="/register" className="rounded-full px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+                Register
+              </Link>
+            </>
+          )}
         </nav>
       </div>
     </header>

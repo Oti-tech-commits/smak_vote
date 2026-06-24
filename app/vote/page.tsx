@@ -1,9 +1,12 @@
 'use client';
 
+import type { Route } from 'next';
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { authHeaders, getVotingToken, hasVoterAccess } from '@/lib/clientAuth';
 import type { CandidateSelection, Election, Position, Candidate } from '@/lib/types';
 
 interface PositionWithCandidates extends Position {
@@ -11,6 +14,8 @@ interface PositionWithCandidates extends Position {
 }
 
 export default function VotePage() {
+  const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false);
   const [election, setElection] = useState<Election | null>(null);
   const [positions, setPositions] = useState<PositionWithCandidates[]>([]);
   const [selected, setSelected] = useState<CandidateSelection[]>([]);
@@ -18,9 +23,23 @@ export default function VotePage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    let active = true;
     async function load() {
-      const response = await fetch('/api/elections');
+      if (!(await hasVoterAccess())) {
+        if (active) {
+          router.replace('/login?redirect=/vote' as Route);
+        }
+        return;
+      }
+      if (active) {
+        setAuthChecked(true);
+      }
+      const headers = await authHeaders();
+      const response = await fetch('/api/elections', { headers });
       const result = await response.json();
+      if (!active) {
+        return;
+      }
       if (response.ok) {
         setElection(result.election);
         setPositions(result.positions ?? []);
@@ -29,7 +48,10 @@ export default function VotePage() {
       }
     }
     load();
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [router]);
 
   const selectionsByPosition = useMemo(() => {
     return selected.reduce<Record<string, string>>((acc, selection) => {
@@ -50,7 +72,7 @@ export default function VotePage() {
     setSubmitting(true);
     const session = await supabaseClient.auth.getSession();
     const token = session.data.session?.access_token;
-    const votingToken = window.localStorage.getItem('smak-voting-token');
+    const votingToken = getVotingToken();
     if (!token && !votingToken) {
       setMessage('Please log in or use your voting token to proceed.');
       setSubmitting(false);
@@ -78,6 +100,16 @@ export default function VotePage() {
     const result = await response.json();
     setMessage(result.message ?? result.error ?? 'Unable to submit vote.');
     setSubmitting(false);
+  }
+
+  if (!authChecked) {
+    return (
+      <section className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
+        <Card>
+          <p className="text-sm text-slate-600">Verifying your access…</p>
+        </Card>
+      </section>
+    );
   }
 
   if (!election) {

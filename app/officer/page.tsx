@@ -1,16 +1,29 @@
-import { Card } from '@/components/ui/card';
-import { supabaseServer } from '@/lib/supabaseServer';
+'use client';
 
-async function fetchOfficerStats() {
-  const [pendingStudents, electedPositions] = await Promise.all([
-    supabaseServer.from('profiles').select('id', { count: 'exact' }).neq('role', 'admin'),
-    supabaseServer.from('positions').select('id', { count: 'exact' })
-  ]);
-  return { users: pendingStudents.count ?? 0, positions: electedPositions.count ?? 0 };
+import { useEffect, useState } from 'react';
+import { Card } from '@/components/ui/card';
+import { AuthGuard } from '@/components/auth-guard';
+import { authHeaders } from '@/lib/clientAuth';
+
+interface OfficerStats {
+  users: number;
+  positions: number;
 }
 
-export default async function OfficerPage() {
-  const stats = await fetchOfficerStats();
+function OfficerDashboard() {
+  const [stats, setStats] = useState<OfficerStats>({ users: 0, positions: 0 });
+
+  useEffect(() => {
+    async function loadStats() {
+      const headers = await authHeaders();
+      const response = await fetch('/api/officer/stats', { headers });
+      if (response.ok) {
+        setStats(await response.json());
+      }
+    }
+    loadStats();
+  }, []);
+
   return (
     <section className="mx-auto max-w-6xl px-6 py-16 lg:px-8 space-y-8">
       <div>
@@ -32,5 +45,13 @@ export default async function OfficerPage() {
         <p className="mt-3 text-slate-600">Records are processed live in Supabase. Use the admin export tools for official reports.</p>
       </Card>
     </section>
+  );
+}
+
+export default function OfficerPage() {
+  return (
+    <AuthGuard allow={['officer', 'admin']}>
+      <OfficerDashboard />
+    </AuthGuard>
   );
 }

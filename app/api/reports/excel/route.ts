@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { requireProfile, unauthorizedResponse } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const profile = await requireProfile(request, 'admin');
+  if (!profile) {
+    return unauthorizedResponse();
+  }
   const [{ data: elections }, { data: turnout }] = await Promise.all([
     supabaseServer.from('elections').select('id, title, status, start_time, end_time, created_at'),
     supabaseServer.rpc('election_turnout_report')

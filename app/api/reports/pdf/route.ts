@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { requireProfile, unauthorizedResponse } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const profile = await requireProfile(request, 'admin');
+  if (!profile) {
+    return unauthorizedResponse();
+  }
   const { data: elections, error } = await supabaseServer.from('elections').select('id, title, status, start_time, end_time');
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -1,6 +1,10 @@
 import { supabaseServer } from '@/lib/supabaseServer';
 import { NextResponse } from 'next/server';
 
+export function getBearerToken(request: Request): string | null {
+  return request.headers.get('authorization')?.replace('Bearer ', '') || null;
+}
+
 export async function getUserProfileFromToken(token: string | null) {
   if (!token) {
     return null;
@@ -35,4 +39,43 @@ export function requireRole(role: string | string[]) {
 
 export function unauthorizedResponse() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+}
+
+export async function requireProfile(request: Request, roles?: string | string[]) {
+  const profile = await getUserProfileFromToken(getBearerToken(request));
+  if (!profile) {
+    return null;
+  }
+  if (roles) {
+    const allowed = Array.isArray(roles) ? roles : [roles];
+    if (!allowed.includes(profile.role)) {
+      return null;
+    }
+  }
+  return profile;
+}
+
+export type VoterAccess =
+  | { kind: 'user'; id: string; role: string }
+  | { kind: 'token'; electionId: string };
+
+export async function getVoterAccess(request: Request): Promise<VoterAccess | null> {
+  const profile = await getUserProfileFromToken(getBearerToken(request));
+  if (profile) {
+    return { kind: 'user', id: profile.id, role: profile.role };
+  }
+
+  const votingToken = request.headers.get('x-voting-token');
+  if (votingToken) {
+    const { data } = await supabaseServer
+      .from('voting_tokens')
+      .select('election_id, expires_at')
+      .eq('token', votingToken)
+      .single();
+    if (data && (!data.expires_at || new Date(data.expires_at) >= new Date())) {
+      return { kind: 'token', electionId: data.election_id };
+    }
+  }
+
+  return null;
 }

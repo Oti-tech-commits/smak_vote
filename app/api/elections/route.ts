@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { getVoterAccess, unauthorizedResponse } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const access = await getVoterAccess(request);
+  if (!access) {
+    return unauthorizedResponse();
+  }
   const { data: election, error } = await supabaseServer
     .from('elections')
     .select('id, title, description, start_time, end_time, status')

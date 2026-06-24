@@ -6,12 +6,24 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema } from '@/lib/validators';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { dashboardPathForRole, getSessionProfile, VOTING_TOKEN_KEY } from '@/lib/clientAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 
 type LoginForm = z.infer<typeof loginSchema>;
+
+function getRedirectParam(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  const redirect = new URLSearchParams(window.location.search).get('redirect');
+  if (redirect && redirect.startsWith('/')) {
+    return redirect;
+  }
+  return null;
+}
 
 export default function LoginPage() {
   const [message, setMessage] = useState<string | null>(null);
@@ -54,9 +66,9 @@ export default function LoginPage() {
         });
         const result = await response.json();
         if (response.ok) {
-          window.localStorage.setItem('smak-voting-token', values.token);
+          window.localStorage.setItem(VOTING_TOKEN_KEY, values.token);
           setMessage('Voting token validated. Redirecting to ballot...');
-          window.location.href = '/vote';
+          window.location.href = getRedirectParam() ?? '/vote';
         } else {
           setMessage(result.error ?? 'Invalid voting token.');
         }
@@ -79,8 +91,10 @@ export default function LoginPage() {
         return;
       }
 
-      setMessage('Login successful. Redirecting to voting dashboard...');
-      window.location.href = '/vote';
+      const profile = await getSessionProfile();
+      const destination = getRedirectParam() ?? (profile ? dashboardPathForRole(profile.role) : '/vote');
+      setMessage('Login successful. Redirecting to your dashboard...');
+      window.location.href = destination;
     } catch (error) {
       setMessage('Unable to complete login.');
     }

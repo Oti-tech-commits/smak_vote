@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { getUserProfileFromToken, unauthorizedResponse } from '@/lib/auth';
+import { getUserProfileFromToken, requireProfile, unauthorizedResponse } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const profile = await requireProfile(request, 'admin');
+  if (!profile) {
+    return unauthorizedResponse();
+  }
   const { data, error } = await supabaseServer.from('candidates').select('id, student_name, class_name, manifesto, photo_url, position_id').order('student_name', { ascending: true });
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
