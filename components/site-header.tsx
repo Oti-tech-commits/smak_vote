@@ -14,9 +14,9 @@ function navItemsFor(profile: SessionProfile | null, hasVotingToken: boolean): N
   const items: NavItem[] = [{ href: '/', label: 'Home' }];
 
   if (profile?.role === 'admin') {
-    items.push({ href: '/admin', label: 'Admin' }, { href: '/results', label: 'Results' });
+    items.push({ href: '/admin', label: 'Admin' }, { href: '/register', label: 'Register Student' }, { href: '/results', label: 'Results' });
   } else if (profile?.role === 'officer') {
-    items.push({ href: '/officer', label: 'Officer' }, { href: '/results', label: 'Results' });
+    items.push({ href: '/officer', label: 'Officer' }, { href: '/register', label: 'Register Student' }, { href: '/results', label: 'Results' });
   } else if (profile || hasVotingToken) {
     items.push({ href: '/vote', label: 'Vote' }, { href: '/results', label: 'Results' });
   }
@@ -78,9 +78,6 @@ export function SiteHeader() {
             <>
               <Link href="/login" className="rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700">
                 Login
-              </Link>
-              <Link href="/register" className="rounded-full px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
-                Register
               </Link>
             </>
           )}

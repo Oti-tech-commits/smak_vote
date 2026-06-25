@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { AuthGuard } from '@/components/auth-guard';
+import { authHeaders } from '@/lib/clientAuth';
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [message, setMessage] = useState<string | null>(null);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema)
@@ -23,7 +25,7 @@ export default function RegisterPage() {
 
     const response = await fetch('/api/auth/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify(values)
     });
 
@@ -46,8 +48,8 @@ export default function RegisterPage() {
       <Card>
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-semibold text-slate-900">Student Registration</h1>
-            <p className="mt-2 text-sm text-slate-600">Create your account with student number and school email.</p>
+            <h1 className="text-3xl font-semibold text-slate-900">Register a Student</h1>
+            <p className="mt-2 text-sm text-slate-600">Officers and admins can register a student account here.</p>
           </div>
           <form className="grid gap-5" onSubmit={handleSubmit(onSubmit)}>
             <div>
@@ -76,12 +78,20 @@ export default function RegisterPage() {
               {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
             </div>
             <Button type="submit" disabled={isSubmitting} className="w-full">
-              Create Account
+              Register Student
             </Button>
             {message && <p className="text-sm text-slate-700">{message}</p>}
           </form>
         </div>
       </Card>
     </section>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <AuthGuard allow={['admin', 'officer']}>
+      <RegisterForm />
+    </AuthGuard>
   );
 }

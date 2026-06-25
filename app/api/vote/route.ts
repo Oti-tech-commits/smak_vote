@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import type { VoteSubmissionRequest, CandidateSelection } from '@/lib/types';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 export async function POST(request: Request) {
   const body = (await request.json()) as VoteSubmissionRequest;
+  const ip = getClientIp(request);
+  if (!rateLimit(`vote:${ip}`, 10, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+  }
+
   const authToken = request.headers.get('authorization')?.replace('Bearer ', '') || null;
   const { selectedCandidates, electionId, votingToken } = body;
 
@@ -76,7 +82,7 @@ export async function POST(request: Request) {
     p_student_id: userId,
     p_election_id: electionId,
     p_votes: JSON.stringify(candidateRecords),
-    p_voting_token: votingToken || null
+    p_voting_token: authToken ? null : (votingToken || null)
   });
 
   if (result.error) {

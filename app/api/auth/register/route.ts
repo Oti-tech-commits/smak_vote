@@ -1,12 +1,26 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
+import { registerSchema } from '@/lib/validators';
+import { requireProfile, unauthorizedResponse } from '@/lib/auth';
 
 export async function POST(request: Request) {
-  const { full_name, student_number, email, class_name, password } = await request.json();
-
-  if (!full_name || !student_number || !email || !class_name || !password) {
-    return NextResponse.json({ error: 'All registration fields are required.' }, { status: 400 });
+  const ip = getClientIp(request);
+  if (!rateLimit(`register:${ip}`, 5, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
   }
+
+  const caller = await requireProfile(request, ['admin', 'officer']);
+  if (!caller) {
+    return unauthorizedResponse();
+  }
+
+  const parsed = registerSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid registration data.' }, { status: 400 });
+  }
+  const { full_name, student_number, email, class_name, password } = parsed.data;
+
 
   const { data: existingProfile, error: existingProfileError } = await supabaseServer
     .from('profiles')

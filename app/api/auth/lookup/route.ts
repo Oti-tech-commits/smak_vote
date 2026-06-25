@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 export async function POST(request: Request) {
   const { student_number } = await request.json();
+  const ip = getClientIp(request);
+  if (!rateLimit(`lookup:${ip}`, 10, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+  }
 
   if (!student_number || typeof student_number !== 'string') {
     return NextResponse.json({ error: 'Student number is required.' }, { status: 400 });
