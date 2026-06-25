@@ -15,7 +15,7 @@ export async function getUserProfileFromToken(token: string | null) {
     return null;
   }
 
-  const { data: profile } = await supabaseServer.from('profiles').select('id, role').eq('id', data.user.id).single();
+  const { data: profile } = await supabaseServer.from('profiles').select('id, role').eq('id', data.user.id).maybeSingle();
   if (!profile) {
     return null;
   }

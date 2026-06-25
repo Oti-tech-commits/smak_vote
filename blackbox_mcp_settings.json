@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "github.com/cloudflare/mcp-server-cloudflare": {
+      "command": "node",
+      "args": ["./node_modules/@cloudflare/mcp-server-cloudflare/dist/index.js", "run"],
+      "transport": "stdio"
+    },
+    "cloudflare": {
+      "type": "http",
+      "url": "https://mcp.cloudflare.com/mcp"
+    },
+    "github.com/supabase-community/supabase-mcp": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=rboxpxmjvheusyssdjan"
+    }
+  }
+}
+

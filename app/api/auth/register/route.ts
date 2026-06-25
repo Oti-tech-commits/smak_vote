@@ -8,6 +8,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'All registration fields are required.' }, { status: 400 });
   }
 
+  const { data: existingProfile, error: existingProfileError } = await supabaseServer
+    .from('profiles')
+    .select('id')
+    .or(`email.eq.${email},student_number.eq.${student_number}`)
+    .maybeSingle();
+
+  if (existingProfileError) {
+    return NextResponse.json({ error: existingProfileError.message }, { status: 500 });
+  }
+
+  if (existingProfile) {
+    return NextResponse.json({ error: 'A user with this email or student number already exists.' }, { status: 409 });
+  }
+
+
   const { data, error } = await supabaseServer.auth.admin.createUser({
     email,
     password,
@@ -29,6 +44,7 @@ export async function POST(request: Request) {
   });
 
   if (profileError) {
+    await supabaseServer.auth.admin.deleteUser(data.user.id);
     return NextResponse.json({ error: profileError.message }, { status: 500 });
   }
 

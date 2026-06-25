@@ -3,18 +3,24 @@ import { supabaseServer } from '@/lib/supabaseServer';
 import { requireProfile, unauthorizedResponse } from '@/lib/auth';
 
 export async function GET(request: Request) {
-  const profile = await requireProfile(request, ['officer', 'admin']);
+  const profile = await requireProfile(request, ['admin', 'officer']);
   if (!profile) {
     return unauthorizedResponse();
   }
 
-  const [verifiedStudents, positions] = await Promise.all([
-    supabaseServer.from('profiles').select('id', { count: 'exact', head: true }).neq('role', 'admin'),
-    supabaseServer.from('positions').select('id', { count: 'exact', head: true })
-  ]);
+  const { data: stats, error } = await supabaseServer.rpc('admin_stats_report').single();
 
-  return NextResponse.json({
-    users: verifiedStudents.count ?? 0,
-    positions: positions.count ?? 0
-  });
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Adapt the data for the officer dashboard
+  const typedStats = stats as { students: number; votes: number };
+  const officerStats = {
+    users: typedStats.students,
+    votes: typedStats.votes
+  };
+
+
+  return NextResponse.json(officerStats);
 }

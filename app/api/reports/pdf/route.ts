@@ -4,7 +4,7 @@ import { supabaseServer } from '@/lib/supabaseServer';
 import { requireProfile, unauthorizedResponse } from '@/lib/auth';
 
 export async function GET(request: Request) {
-  const profile = await requireProfile(request, 'admin');
+  const profile = await requireProfile(request, ['admin', 'officer']);
   if (!profile) {
     return unauthorizedResponse();
   }

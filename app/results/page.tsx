@@ -4,15 +4,25 @@ import type { Route } from 'next';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { authHeaders, hasVoterAccess } from '@/lib/clientAuth';
-import type { Election } from '@/lib/types';
+import type { Election, Position, Candidate } from '@/lib/types';
 
-type ElectionSummary = Pick<Election, 'id' | 'title' | 'status' | 'description' | 'start_time' | 'end_time'>;
+interface CandidateWithVotes extends Candidate {
+  votes: { count: number }[];
+}
+interface PositionWithResults extends Position {
+  candidates: CandidateWithVotes[];
+}
+interface ElectionWithResults extends Election {
+  positions: PositionWithResults[];
+  turnout: { voted: number; total: number };
+}
 
 export default function ResultsPage() {
   const router = useRouter();
   const [authChecked, setAuthChecked] = useState(false);
-  const [elections, setElections] = useState<ElectionSummary[]>([]);
+  const [elections, setElections] = useState<ElectionWithResults[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -73,28 +83,57 @@ export default function ResultsPage() {
         <p className="mt-2 text-slate-600">Review final election results and turnout summaries.</p>
       </div>
       {elections.map((election) => (
-        <Card key={election.id}>
-          <div className="space-y-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-2xl font-semibold text-slate-900">{election.title}</h2>
-                <p className="mt-1 text-sm text-slate-500">{election.description}</p>
-              </div>
-              <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800">Published</span>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-700">Election Window</p>
-                <p className="mt-2 text-slate-600">{new Date(election.start_time).toLocaleDateString()} – {new Date(election.end_time).toLocaleDateString()}</p>
-              </div>
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-700">Status</p>
-                <p className="mt-2 text-slate-600">{election.status}</p>
-              </div>
-            </div>
+        <Card key={election.id} className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-900">{election.title}</h2>
+            <p className="mt-1 text-sm text-slate-500">{election.description}</p>
           </div>
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+            <h3 className="text-lg font-semibold text-slate-800">Turnout</h3>
+            <p className="mt-2 text-4xl font-bold">{election.turnout.voted} / {election.turnout.total} <span className="text-xl font-medium text-slate-600">voters</span></p>
+            <p className="text-sm text-slate-500">({election.turnout.total > 0 ? ((election.turnout.voted / election.turnout.total) * 100).toFixed(1) : 0}%)</p>
+          </div>
+          {election.positions.map(position => {
+            const sortedCandidates = [...position.candidates].sort((a, b) => (b.votes[0]?.count ?? 0) - (a.votes[0]?.count ?? 0));
+            const winners = sortedCandidates.slice(0, position.max_votes);
+
+            return (
+              <div key={position.id} className="rounded-3xl border border-slate-200 p-5">
+                <h3 className="text-xl font-semibold text-slate-900">{position.title}</h3>
+                <div className="mt-4 grid gap-4">
+                  {sortedCandidates.map(candidate => {
+                    const voteCount = candidate.votes[0]?.count ?? 0;
+                    const isWinner = winners.some(w => w.id === candidate.id) && voteCount > 0;
+                    return (
+                      <div key={candidate.id} className={`rounded-2xl p-4 ${isWinner ? 'bg-green-50 border-green-400 border' : 'bg-slate-50'}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <img src={candidate.photo_url} alt={candidate.student_name} className="h-12 w-12 rounded-full object-cover" />
+                            <div>
+                              <p className="font-semibold text-slate-800">{candidate.student_name}</p>
+                              <p className="text-sm text-slate-500">{candidate.class_name}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-slate-900">{voteCount} votes</p>
+                            {isWinner && <p className="text-sm font-semibold text-green-700">Winner</p>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </Card>
       ))}
+      {elections.length === 0 && !error && (
+        <Card>
+          <p className="text-slate-600">No published election results are available at this time.</p>
+        </Card>
+      )}
     </section>
   );
 }
+

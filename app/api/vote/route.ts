@@ -80,6 +80,10 @@ export async function POST(request: Request) {
   });
 
   if (result.error) {
+    // Check for unique constraint violation which indicates a re-vote attempt
+    if (result.error.message.includes('duplicate key value violates unique constraint "voter_status_pkey"')) {
+      return NextResponse.json({ error: 'You have already voted in this election.' }, { status: 403 });
+    }
     return NextResponse.json({ error: result.error.message }, { status: 500 });
   }
 

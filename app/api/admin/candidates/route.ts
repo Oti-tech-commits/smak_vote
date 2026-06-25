@@ -32,6 +32,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'All candidate fields and photo are required.' }, { status: 400 });
   }
 
+  // Validate photo
+  const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+  if (!allowedTypes.includes(photo.type)) {
+    return NextResponse.json({ error: 'Invalid photo type. Only PNG, JPEG, WEBP, and GIF are allowed.' }, { status: 400 });
+  }
+
+  const maxSize = 2 * 1024 * 1024; // 2MB
+  if (photo.size > maxSize) {
+    return NextResponse.json({ error: 'Photo size exceeds the 2MB limit.' }, { status: 400 });
+  }
+
+
   const fileName = `${crypto.randomUUID()}-${photo.name}`;
   const { data: uploadData, error: uploadError } = await supabaseServer.storage.from('candidate-photos').upload(fileName, photo.stream(), {
     contentType: photo.type,

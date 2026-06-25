@@ -7,7 +7,7 @@ import { AuthGuard } from '@/components/auth-guard';
 import { authHeaders } from '@/lib/clientAuth';
 import type { Election } from '@/lib/types';
 
-type ElectionSummary = Pick<Election, 'id' | 'status'>;
+type ElectionSummary = Pick<Election, 'id' | 'status' | 'title'>;
 
 interface AdminStats {
   students: number;
@@ -84,7 +84,8 @@ function AdminDashboard() {
           <div className="mt-4 space-y-3">
             {stats.elections.map((election) => (
               <div key={election.id} className="rounded-3xl border border-slate-200 p-4 bg-slate-50">
-                <p className="text-sm font-semibold text-slate-800">{election.id}</p>
+                <p className="text-sm font-semibold text-slate-800">{election.title}</p>
+                <p className="text-xs text-slate-500">{election.id}</p>
                 <p className="text-sm text-slate-600">Status: {election.status}</p>
               </div>
             ))}

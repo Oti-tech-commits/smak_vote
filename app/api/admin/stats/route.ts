@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { requireProfile, unauthorizedResponse } from '@/lib/auth';
-import type { Election } from '@/lib/types';
-
-type ElectionSummary = Pick<Election, 'id' | 'status'>;
 
 export async function GET(request: Request) {
   const profile = await requireProfile(request, 'admin');
@@ -11,16 +8,17 @@ export async function GET(request: Request) {
     return unauthorizedResponse();
   }
 
-  const [students, votes, elections] = await Promise.all([
-    supabaseServer.from('profiles').select('id', { count: 'exact', head: true }),
-    supabaseServer.from('votes').select('id', { count: 'exact', head: true }),
-    supabaseServer.from('elections').select('id, status')
-  ]);
+  const { data, error } = await supabaseServer.rpc('admin_stats_report').single() as { data: { students: number, votes: number, elections: {id: string, status: string}[] } | null, error: any };
 
-  const electionRows = (elections.data ?? []) as ElectionSummary[];
-  return NextResponse.json({
-    students: students.count ?? 0,
-    votes: votes.count ?? 0,
-    elections: electionRows
-  });
+  if (data?.elections) {
+    const { data: electionDetails } = await supabaseServer.from('elections').select('id, title').in('id', data.elections.map(e => e.id));
+    const titleMap = new Map(electionDetails?.map(e => [e.id, e.title]));
+    data.elections = data.elections.map(e => ({ ...e, title: titleMap.get(e.id) ?? e.id }));
+  }
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
 }

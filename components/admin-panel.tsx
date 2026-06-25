@@ -15,7 +15,11 @@ export function AdminPanel() {
   const [positions, setPositions] = useState<Position[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [tokens, setTokens] = useState<VotingToken[]>([]);
-  const [message, setMessage] = useState<string | null>(null);
+  const [electionMessage, setElectionMessage] = useState<string | null>(null);
+  const [positionMessage, setPositionMessage] = useState<string | null>(null);
+  const [candidateMessage, setCandidateMessage] = useState<string | null>(null);
+  const [tokenMessage, setTokenMessage] = useState<string | null>(null);
+  const [manageElectionMessage, setManageElectionMessage] = useState<string | null>(null);
   const [electionForm, setElectionForm] = useState({ title: '', description: '', start_time: '', end_time: '' });
   const [candidateForm, setCandidateForm] = useState({ student_name: '', class_name: '', manifesto: '', position_id: '', photo: null as File | null });
   const [positionForm, setPositionForm] = useState({ title: '', max_votes: '1', election_id: '' });
@@ -48,7 +52,7 @@ export function AdminPanel() {
 
   async function createElection(event: React.FormEvent) {
     event.preventDefault();
-    setMessage(null);
+    setElectionMessage(null);
     setIsLoading(true);
     const headers = await getAuthHeaders();
     const response = await fetch('/api/admin/elections', {
@@ -57,7 +61,7 @@ export function AdminPanel() {
       body: JSON.stringify(electionForm)
     });
     const result = await response.json();
-    setMessage(result.message || result.error || 'Election created.');
+    setElectionMessage(result.message || result.error || 'Election created.');
     setIsLoading(false);
     if (response.ok) {
       setElectionForm({ title: '', description: '', start_time: '', end_time: '' });
@@ -67,7 +71,7 @@ export function AdminPanel() {
 
   async function createPosition(event: React.FormEvent) {
     event.preventDefault();
-    setMessage(null);
+    setPositionMessage(null);
     setIsLoading(true);
     const headers = await getAuthHeaders();
     const response = await fetch('/api/admin/positions', {
@@ -79,7 +83,7 @@ export function AdminPanel() {
       })
     });
     const result = await response.json();
-    setMessage(result.message || result.error || 'Position created.');
+    setPositionMessage(result.message || result.error || 'Position created.');
     setIsLoading(false);
     if (response.ok) {
       setPositionForm({ title: '', max_votes: '1', election_id: '' });
@@ -89,10 +93,10 @@ export function AdminPanel() {
 
   async function createCandidate(event: React.FormEvent) {
     event.preventDefault();
-    setMessage(null);
+    setCandidateMessage(null);
     setIsLoading(true);
     if (!candidateForm.photo) {
-      setMessage('Candidate photo is required.');
+      setCandidateMessage('Candidate photo is required.');
       setIsLoading(false);
       return;
     }
@@ -106,7 +110,7 @@ export function AdminPanel() {
     const headers = await getAuthHeaders();
     const response = await fetch('/api/admin/candidates', { method: 'POST', headers, body: formData });
     const result = await response.json();
-    setMessage(result.message || result.error || 'Candidate added.');
+    setCandidateMessage(result.message || result.error || 'Candidate added.');
     setIsLoading(false);
     if (response.ok) {
       setCandidateForm({ student_name: '', class_name: '', manifesto: '', position_id: '', photo: null });
@@ -115,7 +119,7 @@ export function AdminPanel() {
   }
 
   async function updateElectionStatus(id: string, status: string) {
-    setMessage(null);
+    setManageElectionMessage(null);
     setIsLoading(true);
     const headers = await getAuthHeaders();
     const response = await fetch(`/api/admin/elections/${id}`, {
@@ -124,14 +128,14 @@ export function AdminPanel() {
       body: JSON.stringify({ status })
     });
     const result = await response.json();
-    setMessage(result.message || result.error || 'Election status updated.');
+    setManageElectionMessage(result.message || result.error || 'Election status updated.');
     setIsLoading(false);
     if (response.ok) fetchData();
   }
 
   async function createToken(event: React.FormEvent) {
     event.preventDefault();
-    setMessage(null);
+    setTokenMessage(null);
     setIsLoading(true);
     const headers = await getAuthHeaders();
     const response = await fetch('/api/admin/tokens', {
@@ -145,7 +149,7 @@ export function AdminPanel() {
       })
     });
     const result = await response.json();
-    setMessage(result.message || (result.token ? `Token created: ${result.token.token}` : result.error) || 'Token created.');
+    setTokenMessage(result.message || (result.token ? `Token created: ${result.token.token}` : result.error) || 'Token created.');
     setIsLoading(false);
     if (response.ok) {
       setTokenForm({ election_id: '', student_number: '', email: '', expires_at: '' });
@@ -154,7 +158,7 @@ export function AdminPanel() {
   }
 
   async function deleteToken(id: string) {
-    setMessage(null);
+    setTokenMessage(null);
     setIsLoading(true);
     const headers = await getAuthHeaders();
     const response = await fetch(`/api/admin/tokens/${id}`, {
@@ -162,7 +166,7 @@ export function AdminPanel() {
       headers
     });
     const result = await response.json();
-    setMessage(result.message || result.error || 'Token deleted.');
+    setTokenMessage(result.message || result.error || 'Token deleted.');
     setIsLoading(false);
     if (response.ok) fetchData();
   }
@@ -191,6 +195,7 @@ export function AdminPanel() {
             </div>
           </div>
           <Button type="submit" disabled={isLoading}>Create Election</Button>
+          {electionMessage && <div className="rounded-md border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">{electionMessage}</div>}
         </form>
       </Card>
 
@@ -217,6 +222,7 @@ export function AdminPanel() {
             </div>
           </div>
           <Button type="submit" disabled={isLoading}>Create Position</Button>
+          {positionMessage && <div className="rounded-md border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">{positionMessage}</div>}
         </form>
       </Card>
 
@@ -249,6 +255,7 @@ export function AdminPanel() {
             <Input id="photo" type="file" accept="image/*" onChange={(event) => setCandidateForm({ ...candidateForm, photo: event.target.files?.[0] ?? null })} required />
           </div>
           <Button type="submit" disabled={isLoading}>Register Candidate</Button>
+          {candidateMessage && <div className="rounded-md border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">{candidateMessage}</div>}
         </form>
       </Card>
 
@@ -301,6 +308,7 @@ export function AdminPanel() {
             <Input id="expires_at" type="datetime-local" value={tokenForm.expires_at} onChange={(e) => setTokenForm({ ...tokenForm, expires_at: e.target.value })} />
           </div>
           <Button type="submit" disabled={isLoading}>Create Voting Token</Button>
+          {tokenMessage && <div className="rounded-md border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">{tokenMessage}</div>}
         </form>
       </Card>
 
@@ -339,8 +347,8 @@ export function AdminPanel() {
             </div>
           ))}
         </div>
+        {manageElectionMessage && <div className="mt-4 rounded-md border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700">{manageElectionMessage}</div>}
       </Card>
-      {message && <div className="rounded-3xl border border-brand-100 bg-brand-50 p-4 text-sm text-brand-700">{message}</div>}
     </div>
   );
 }

@@ -42,10 +42,14 @@ export default function LoginPage() {
       return;
     }
 
-    if (mode === 'student' && !values.studentNumber) {
-      setMessage('Student number is required for student login.');
-      return;
+    if (mode === 'student') {
+      const sn = values.studentNumber?.trim() ?? '';
+      if (!sn || sn.length < 3) {
+        setMessage('Student number must be at least 3 characters.');
+        return;
+      }
     }
+
 
     if (mode === 'email' && !values.email) {
       setMessage('Email is required for email login.');

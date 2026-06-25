@@ -7,11 +7,11 @@ import { authHeaders } from '@/lib/clientAuth';
 
 interface OfficerStats {
   users: number;
-  positions: number;
+  votes: number;
 }
 
 function OfficerDashboard() {
-  const [stats, setStats] = useState<OfficerStats>({ users: 0, positions: 0 });
+  const [stats, setStats] = useState<OfficerStats>({ users: 0, votes: 0 });
 
   useEffect(() => {
     async function loadStats() {
@@ -36,13 +36,13 @@ function OfficerDashboard() {
           <p className="mt-4 text-4xl font-semibold text-slate-900">{stats.users}</p>
         </Card>
         <Card>
-          <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Managed Positions</p>
-          <p className="mt-4 text-4xl font-semibold text-slate-900">{stats.positions}</p>
+          <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Total Votes Cast</p>
+          <p className="mt-4 text-4xl font-semibold text-slate-900">{stats.votes}</p>
         </Card>
       </div>
       <Card>
         <h2 className="text-xl font-semibold text-slate-900">Realtime Turnout</h2>
-        <p className="mt-3 text-slate-600">Records are processed live in Supabase. Use the admin export tools for official reports.</p>
+        <p className="mt-3 text-slate-600">The number of votes cast is updated in real-time. For detailed official reports, please use the tools available in the main Admin Dashboard.</p>
       </Card>
     </section>
   );

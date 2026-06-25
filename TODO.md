@@ -1,54 +1,23 @@
-# TODO - Student Voting System Production Readiness
+# TODO - smak-vote fixes
 
-## Step 1: Database concurrency + max vote enforcement
-- [x] Add new migration `supabase/migrations/0003_fix_cast_ballot_concurrency.sql`
-  - [x] Replace `cast_ballot` to enforce `positions.max_votes` per position
-  - [x] Prevent double voting under concurrency by using plain INSERT into `voter_status` (no `on conflict do update`)
-  - [ ] Keep everything transactionally safe
+## Phase A (Vote page correctness + UX)
+- [x] Implement per-position multi-vote counter + toggle selection without replacement
+- [ ] Dim/disable candidate buttons when per-position max reached
+- [ ] Add submit success state: disable submit, show confirmation card, hide grid
 
+## Phase B (Auth/register robustness + elections/profile)
+- [ ] Rollback dangling auth user if profiles upsert fails in app/api/auth/register/route.ts
+- [ ] elections: switch to .maybeSingle() and handle null election
+- [ ] lib/auth.ts: switch profiles lookup to .maybeSingle()
 
-## Step 2: Secure reports endpoints
-- [ ] Update `app/api/reports/excel/route.ts`
-  - [ ] Require Bearer token
-  - [ ] Check role is `admin` or `officer`
-- [ ] Update `app/api/reports/pdf/route.ts`
-  - [ ] Same auth+role enforcement
+## Phase C (Results + officer + CSP + admin panel)
+- [ ] results API: aggregate vote counts by position/candidate + turnout
+- [ ] results page: render tallies/winners/turnout
+- [ ] officer: replace realtime turnout placeholder with real data
+- [ ] middleware: tighten CSP connect-src to NEXT_PUBLIC_SUPABASE_URL origin
+- [ ] admin-panel: split message state per section
 
-## Step 3: Add authenticated stats endpoints
-- [ ] Create `app/api/admin/stats/route.ts` (admin-only)
-- [ ] Create `app/api/officer/stats/route.ts` (admin/officer)
-
-## Step 4: Candidate photo validation
-- [ ] Update `app/api/admin/candidates/route.ts`
-  - [ ] Restrict MIME types to png/jpeg/webp/gif
-  - [ ] Limit size to 2MB
-
-## Step 5: Prevent orphaned auth accounts on register
-- [ ] Update `app/api/auth/register/route.ts`
-  - [ ] Check `profiles` for existing `student_number` or `email` before `auth.admin.createUser`
-
-## Step 6: Convert dashboards to client components with role checks
-- [ ] Update `app/admin/page.tsx` to client component
-  - [ ] Use `supabaseClient.auth.getSession()`
-  - [ ] Verify role client-side
-  - [ ] Fetch stats from `/api/admin/stats`
-- [ ] Update `app/officer/page.tsx` to client component
-  - [ ] Verify role client-side
-  - [ ] Fetch stats from `/api/officer/stats`
-
-## Step 7: Multi-vote UI for positions with max_votes > 1
-- [ ] Refactor `app/vote/page.tsx`
-  - [ ] Allow multiple candidate selections per position up to `position.max_votes`
-  - [ ] Toggle selected candidates
-  - [ ] Highlight all selections
-  - [ ] Submit all selections
-
-## Step 8: Tests / TypeScript fixes
-- [ ] Update `lib/auth.test.ts` to fix mocked `supabaseServer.auth.getUser` typing
-
-## Step 9: Verification
-- [ ] `npm run test`
-- [ ] `npm run typecheck`
-- [ ] `npm run build`
-- [ ] Manual checks: dashboards/report auth, multi-vote, concurrent vote behavior
+## Phase D (Admin election status + vote route hardening)
+- [ ] admin stats route: include election title and update UI to render title
+- [ ] (optional hardening) vote route: map unique-violation from cast_ballot to friendly 403
 

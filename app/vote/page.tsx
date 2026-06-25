@@ -7,6 +7,7 @@ import { supabaseClient } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { authHeaders, getVotingToken, hasVoterAccess } from '@/lib/clientAuth';
+
 import type { CandidateSelection, Election, Position, Candidate } from '@/lib/types';
 
 interface PositionWithCandidates extends Position {
@@ -18,9 +19,11 @@ export default function VotePage() {
   const [authChecked, setAuthChecked] = useState(false);
   const [election, setElection] = useState<Election | null>(null);
   const [positions, setPositions] = useState<PositionWithCandidates[]>([]);
-  const [selected, setSelected] = useState<CandidateSelection[]>([]);
+  const [selectedByPosition, setSelectedByPosition] = useState<Record<string, string[]>>({});
+
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -53,19 +56,31 @@ export default function VotePage() {
     };
   }, [router]);
 
-  const selectionsByPosition = useMemo(() => {
-    return selected.reduce<Record<string, string>>((acc, selection) => {
-      acc[selection.positionId] = selection.candidateId;
-      return acc;
-    }, {});
-  }, [selected]);
 
-  function handleSelect(positionId: string, candidateId: string) {
-    setSelected((current) => {
-      const remaining = current.filter((item) => item.positionId !== positionId);
-      return [...remaining, { positionId, candidateId }];
+
+  function handleSelect(positionId: string, candidateId: string, maxVotes: number) {
+    setSelectedByPosition((current) => {
+      const existing = current[positionId] ?? [];
+      const isSelected = existing.includes(candidateId);
+
+      if (isSelected) {
+        return {
+          ...current,
+          [positionId]: existing.filter((id) => id !== candidateId)
+        };
+      }
+
+      if (existing.length >= maxVotes) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [positionId]: [...existing, candidateId]
+      };
     });
   }
+
 
   async function submitVote() {
     setMessage(null);
@@ -83,11 +98,16 @@ export default function VotePage() {
       setSubmitting(false);
       return;
     }
+    const selectedCandidates = Object.entries(selectedByPosition).flatMap(([positionId, candidateIds]) =>
+      candidateIds.map((candidateId) => ({ positionId, candidateId }))
+    );
+
     const body = {
       electionId: election.id,
-      selectedCandidates: selected.map((item) => ({ positionId: item.positionId, candidateId: item.candidateId })),
+      selectedCandidates,
       votingToken: votingToken ?? null
     };
+
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) {
       headers.Authorization = `Bearer ${token}`;
@@ -99,6 +119,9 @@ export default function VotePage() {
     });
     const result = await response.json();
     setMessage(result.message ?? result.error ?? 'Unable to submit vote.');
+    if (response.ok) {
+      setSubmitted(true);
+    }
     setSubmitting(false);
   }
 
@@ -123,6 +146,18 @@ export default function VotePage() {
     );
   }
 
+  if (submitted) {
+    return (
+      <section className="mx-auto max-w-4xl px-6 py-16 lg:px-8">
+        <Card>
+          <h2 className="text-xl font-semibold">Vote Submitted Successfully!</h2>
+          <p className="mt-3 text-slate-600">Thank you for participating in the election. Your vote has been recorded.</p>
+          <Button onClick={() => router.push('/results' as Route)} className="mt-4">View Results</Button>
+        </Card>
+      </section>
+    );
+  }
+
   return (
     <section className="mx-auto max-w-6xl px-6 py-16 lg:px-8">
       <Card>
@@ -133,44 +168,65 @@ export default function VotePage() {
             <p className="mt-2 text-sm text-slate-500">Election open from {new Date(election.start_time).toLocaleString()} to {new Date(election.end_time).toLocaleString()}.</p>
           </div>
           <div className="grid gap-6">
-            {positions.map((position) => (
-              <section key={position.id} className="rounded-3xl border border-slate-200 p-5">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-xl font-semibold text-slate-900">{position.title}</h2>
-                    <p className="mt-1 text-sm text-slate-500">Select up to {position.max_votes} candidate(s).</p>
+            {positions.map((position) => {
+              const currentSelectionsForPosition = selectedByPosition[position.id] ?? [];
+              const atMaxVotes = currentSelectionsForPosition.length >= position.max_votes;
+
+
+              return (
+                <section key={position.id} className="rounded-3xl border border-slate-200 p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-xl font-semibold text-slate-900">{position.title}</h2>
+                      <p className="mt-1 text-sm text-slate-500">Select up to {position.max_votes} candidate(s). {currentSelectionsForPosition.length} of {position.max_votes} selected.</p>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {position.candidates.map((candidate: Candidate) => {
-                    const selectedId = selectionsByPosition[position.id] === candidate.id;
-                    return (
-                      <button
-                        key={candidate.id}
-                        type="button"
-                        onClick={() => handleSelect(position.id, candidate.id)}
-                        className={`rounded-3xl border p-4 text-left transition ${selectedId ? 'border-brand-500 bg-brand-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <img src={candidate.photo_url} alt={candidate.student_name} className="h-16 w-16 rounded-full object-cover" />
-                          <div>
-                            <p className="text-base font-semibold text-slate-900">{candidate.student_name}</p>
-                            <p className="text-sm text-slate-600">{candidate.class_name}</p>
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {position.candidates.map((candidate: Candidate) => {
+                      const isSelected = currentSelectionsForPosition.includes(candidate.id);
+                      const isDisabled = !isSelected && atMaxVotes;
+                      return (
+                        <button
+                          key={candidate.id}
+                          type="button"
+                          onClick={() => handleSelect(position.id, candidate.id, position.max_votes)}
+
+                          disabled={isDisabled}
+                          className={`rounded-3xl border p-4 text-left transition ${
+                            isSelected
+                              ? 'border-brand-500 bg-brand-50'
+                              : 'border-slate-200 bg-white hover:border-slate-300'} ${
+                            isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+
+                          <div className="flex items-center gap-4">
+                            <img src={candidate.photo_url} alt={candidate.student_name} className="h-16 w-16 rounded-full object-cover" />
+                            <div>
+                              <p className="text-base font-semibold text-slate-900">{candidate.student_name}</p>
+                              <p className="text-sm text-slate-600">{candidate.class_name}</p>
+                            </div>
                           </div>
-                        </div>
-                        <p className="mt-3 text-sm leading-6 text-slate-600">{candidate.manifesto}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+                          <p className="mt-3 text-sm leading-6 text-slate-600">{candidate.manifesto}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
           </div>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm text-slate-600">Selected positions: {selected.length}.</p>
+              <p className="text-sm text-slate-600">
+                Total selections: {Object.values(selectedByPosition).reduce((sum, arr) => sum + arr.length, 0)}.
+              </p>
             </div>
-            <Button onClick={submitVote} disabled={submitting || selected.length === 0} className="w-full sm:w-auto">
+            <Button
+              onClick={submitVote}
+              disabled={submitting || Object.values(selectedByPosition).reduce((sum, arr) => sum + arr.length, 0) === 0 || submitted}
+              className="w-full sm:w-auto"
+            >
+
               Submit Vote
             </Button>
           </div>

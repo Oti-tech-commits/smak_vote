@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     .eq('status', 'open')
     .order('start_time', { ascending: true })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (error || !election) {
     return NextResponse.json({ error: 'No active election found.' }, { status: 404 });
