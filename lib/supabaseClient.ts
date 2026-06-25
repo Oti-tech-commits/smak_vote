@@ -5,8 +5,11 @@ let cachedClient: SupabaseClient | null = null;
 function getSupabaseClient(): SupabaseClient {
   if (!cachedClient) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
-    cachedClient = createClient(supabaseUrl, supabaseAnonKey, {
+    const supabasePublishableKey =
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+      '';
+    cachedClient = createClient(supabaseUrl, supabasePublishableKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true

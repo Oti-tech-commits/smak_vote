@@ -290,11 +290,11 @@ export function AdminPanel() {
           </div>
           <div>
             <Label htmlFor="student_number">Student Number</Label>
-            <Input id="student_number" value={tokenForm.student_number} onChange={(e) => setTokenForm({ ...tokenForm, student_number: e.target.value })} placeholder="Optional" />
+            <Input id="student_number" value={tokenForm.student_number} onChange={(e) => setTokenForm({ ...tokenForm, student_number: e.target.value })} placeholder="Required if email is blank" />
           </div>
           <div>
             <Label htmlFor="token_email">Email</Label>
-            <Input id="token_email" value={tokenForm.email} onChange={(e) => setTokenForm({ ...tokenForm, email: e.target.value })} placeholder="Optional" />
+            <Input id="token_email" value={tokenForm.email} onChange={(e) => setTokenForm({ ...tokenForm, email: e.target.value })} placeholder="Required if student number is blank" />
           </div>
           <div>
             <Label htmlFor="expires_at">Expires at</Label>

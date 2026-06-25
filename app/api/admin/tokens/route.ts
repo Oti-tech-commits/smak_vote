@@ -32,6 +32,9 @@ export async function POST(request: Request) {
   if (!election_id) {
     return NextResponse.json({ error: 'Election ID is required.' }, { status: 400 });
   }
+  if (!student_number && !email) {
+    return NextResponse.json({ error: 'Student number or email is required for a usable voting token.' }, { status: 400 });
+  }
 
   let student_id: string | null = null;
   if (student_number || email) {

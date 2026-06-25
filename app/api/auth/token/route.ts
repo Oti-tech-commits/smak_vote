@@ -10,7 +10,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabaseServer
     .from('voting_tokens')
-    .select('id, election_id, expires_at, used')
+    .select('id, election_id, student_id, expires_at, used')
     .eq('token', token)
     .single();
 
@@ -20,6 +20,10 @@ export async function POST(request: Request) {
 
   if (data.used) {
     return NextResponse.json({ error: 'This voting token has already been used.' }, { status: 403 });
+  }
+
+  if (!data.student_id) {
+    return NextResponse.json({ error: 'This voting token is not assigned to a voter.' }, { status: 403 });
   }
 
   if (data.expires_at) {
