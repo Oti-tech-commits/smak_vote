@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -89,12 +90,21 @@ function RegisterForm() {
 }
 
 export default function RegisterPage() {
+  // This component is shown to users who are not logged in as an admin or officer.
   const fallback = (
-    <div className="py-16 text-center">
-      <h1 className="text-2xl font-semibold">Access Denied</h1>
-      <p className="mt-2 text-slate-600">You must be logged in as an Admin or Officer to register a new student.</p>
-    </div>
+    <section className="mx-auto max-w-3xl px-6 py-16 lg:px-8">
+      <Card>
+        <div className="py-12 text-center">
+          <h1 className="text-2xl font-semibold">Access Denied</h1>
+          <p className="mt-2 text-slate-600">You must be logged in as an Admin or Officer to register a new student.</p>
+          <Button asChild className="mt-6">
+            <Link href="/login">Go to Login</Link>
+          </Button>
+        </div>
+      </Card>
+    </section>
   );
+
   return (
     <AuthGuard allow={['admin', 'officer']} fallback={fallback}>
       <RegisterForm />
