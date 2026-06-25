@@ -21,6 +21,36 @@ export async function GET(request: Request) {
     votes: typedStats.votes
   };
 
+  // Officer turnout: compute eligible voters and votes cast from voting status.
+  // Assumes voter_status.has_voted tracks whether the student has already voted.
+  const { data: electionTurnoutRows, error: turnoutError } = await supabaseServer
+    .from('voter_status')
+    .select('has_voted')
+    .eq('has_voted', true);
 
-  return NextResponse.json(officerStats);
+  if (turnoutError) {
+    return NextResponse.json({ error: turnoutError.message }, { status: 500 });
+  }
+
+  const votesCast = electionTurnoutRows?.length ?? 0;
+
+  // Eligible voters = total student profiles.
+  const { count: eligibleVoters, error: eligibleError } = await supabaseServer
+    .from('profiles')
+    .select('*', { count: 'exact', head: true })
+    .eq('role', 'student');
+
+  if (eligibleError) {
+    return NextResponse.json({ error: eligibleError.message }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    ...officerStats,
+    turnout: {
+      votes_cast: votesCast,
+      eligible_voters: eligibleVoters ?? 0
+    }
+  });
 }
+
+

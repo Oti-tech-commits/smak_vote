@@ -8,7 +8,12 @@ import { authHeaders } from '@/lib/clientAuth';
 interface OfficerStats {
   users: number;
   votes: number;
+  turnout?: {
+    votes_cast: number;
+    eligible_voters: number;
+  };
 }
+
 
 function OfficerDashboard() {
   const [stats, setStats] = useState<OfficerStats>({ users: 0, votes: 0 });
@@ -42,8 +47,16 @@ function OfficerDashboard() {
       </div>
       <Card>
         <h2 className="text-xl font-semibold text-slate-900">Realtime Turnout</h2>
-        <p className="mt-3 text-slate-600">The number of votes cast is updated in real-time. For detailed official reports, please use the tools available in the main Admin Dashboard.</p>
+        {stats.turnout ? (
+          <div className="mt-3">
+            <p className="text-4xl font-semibold text-slate-900">{stats.turnout.votes_cast} <span className="text-xl font-medium text-slate-600">/ {stats.turnout.eligible_voters}</span></p>
+            <p className="mt-1 text-sm text-slate-500">({stats.turnout.eligible_voters > 0 ? ((stats.turnout.votes_cast / stats.turnout.eligible_voters) * 100).toFixed(1) : '0.0'}%)</p>
+          </div>
+        ) : (
+          <p className="mt-3 text-slate-600">Loading turnout…</p>
+        )}
       </Card>
+
     </section>
   );
 }

@@ -8,7 +8,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline' https:",
   "img-src 'self' data: https:",
   "font-src 'self' https:",
-  "connect-src 'self' https://*",
+  `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL ? process.env.NEXT_PUBLIC_SUPABASE_URL.replace(/\/$/, '') : "https://*"}`,
   "frame-ancestors 'none'",
   "form-action 'self'"
 ].join('; ');

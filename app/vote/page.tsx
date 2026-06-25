@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { authHeaders, getVotingToken, hasVoterAccess } from '@/lib/clientAuth';
 
-import type { CandidateSelection, Election, Position, Candidate } from '@/lib/types';
+import type { Election, Position, Candidate } from '@/lib/types';
 
 interface PositionWithCandidates extends Position {
   candidates: Candidate[];
@@ -169,21 +169,22 @@ export default function VotePage() {
           </div>
           <div className="grid gap-6">
             {positions.map((position) => {
-              const currentSelectionsForPosition = selectedByPosition[position.id] ?? [];
-              const atMaxVotes = currentSelectionsForPosition.length >= position.max_votes;
-
+              const selectedIds = selectedByPosition[position.id] ?? [];
+              const atMaxVotes = selectedIds.length >= position.max_votes;
 
               return (
                 <section key={position.id} className="rounded-3xl border border-slate-200 p-5">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <h2 className="text-xl font-semibold text-slate-900">{position.title}</h2>
-                      <p className="mt-1 text-sm text-slate-500">Select up to {position.max_votes} candidate(s). {currentSelectionsForPosition.length} of {position.max_votes} selected.</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        {selectedIds.length} of {position.max_votes} selected
+                      </p>
                     </div>
                   </div>
                   <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {position.candidates.map((candidate: Candidate) => {
-                      const isSelected = currentSelectionsForPosition.includes(candidate.id);
+                      const isSelected = selectedIds.includes(candidate.id);
                       const isDisabled = !isSelected && atMaxVotes;
                       return (
                         <button
