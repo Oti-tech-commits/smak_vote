@@ -89,8 +89,14 @@ function RegisterForm() {
 }
 
 export default function RegisterPage() {
+  const fallback = (
+    <div className="py-16 text-center">
+      <h1 className="text-2xl font-semibold">Access Denied</h1>
+      <p className="mt-2 text-slate-600">You must be logged in as an Admin or Officer to register a new student.</p>
+    </div>
+  );
   return (
-    <AuthGuard allow={['admin', 'officer']}>
+    <AuthGuard allow={['admin', 'officer']} fallback={fallback}>
       <RegisterForm />
     </AuthGuard>
   );
