@@ -9,6 +9,9 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "supabase:migrate": "supabase db push",
+    "supabase:seed": "node supabase/seed.js",
+    "playwright:test": "playwright test",
     "cf:build": "opennextjs-cloudflare build",
     "cf:deploy": "opennextjs-cloudflare build && wrangler deploy",
     "cf:preview": "opennextjs-cloudflare build && wrangler dev"
