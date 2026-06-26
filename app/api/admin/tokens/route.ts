@@ -48,13 +48,17 @@ export async function POST(request: Request) {
   }
 
   const tokenValue = crypto.randomUUID();
-  const { data, error }.from('voting_tokens').insert({
-    token: tokenValue,
-    election_id,
-    student_id,
-    expires_at: expires_at ? new Date(expires_at).toISOString() : null,
-    used: false
-  }).select().single();
+  const { data, error } = await supabaseServer
+    .from('voting_tokens')
+    .insert({
+      token: tokenValue,
+      election_id,
+      student_id,
+      expires_at: expires_at ? new Date(expires_at).toISOString() : null,
+      used: false
+    })
+    .select()
+    .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
