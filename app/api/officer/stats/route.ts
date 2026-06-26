@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { requireProfile, unauthorizedResponse } from '@/lib/auth';
@@ -52,5 +53,3 @@ export async function GET(request: Request) {
     }
   });
 }
-
-

@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
 import { supabaseServer } from '@/lib/supabaseServer';

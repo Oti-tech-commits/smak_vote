@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   }
 
   const tokenValue = crypto.randomUUID();
-  const { data, error } = await supabaseServer.from('voting_tokens').insert({
+  const { data, error }.from('voting_tokens').insert({
     token: tokenValue,
     election_id,
     student_id,
