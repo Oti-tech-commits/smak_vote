@@ -1,15 +1,14 @@
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import type { VoteSubmissionRequest, CandidateSelection } from '@/lib/types';
-import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as VoteSubmissionRequest;
   const ip = getClientIp(request);
   if (!rateLimit(`vote:${ip}`, 10, 60_000)) {
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
   }
-
+  const body = (await request.json()) as VoteSubmissionRequest;
   const authToken = request.headers.get('authorization')?.replace('Bearer ', '') || null;
   const { selectedCandidates, electionId, votingToken } = body;
 
@@ -19,6 +18,7 @@ export async function POST(request: Request) {
 
   let userId: string | null = null;
 
+  // If a user is logged in, use their session
   if (authToken) {
     const { data: userData, error: userError } = await supabaseServer.auth.getUser(authToken);
     if (userError || !userData?.user) {
@@ -27,10 +27,12 @@ export async function POST(request: Request) {
     userId = userData.user.id;
   }
 
+  // If not logged in, try to use a voting token
   if (!userId) {
     if (!votingToken) {
       return NextResponse.json({ error: 'Authentication or voting token required.' }, { status: 401 });
     }
+    // Validate the voting token
     const { data: tokenRow, error: tokenError } = await supabaseServer
       .from('voting_tokens')
       .select('student_id, election_id, expires_at, used')
@@ -57,6 +59,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Could not determine voter identity.' }, { status: 401 });
   }
 
+  // Check if user has already voted
   const { data: existing, error: existingError } = await supabaseServer
     .from('voter_status')
     .select('id, has_voted')
@@ -78,6 +81,7 @@ export async function POST(request: Request) {
     candidate_id: candidate.candidateId
   }));
 
+  // Use the cast_ballot RPC function
   const result = await supabaseServer.rpc('cast_ballot', {
     p_student_id: userId,
     p_election_id: electionId,

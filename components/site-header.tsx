@@ -10,6 +10,7 @@ import { getSessionProfile, getVotingToken, signOut, type SessionProfile } from 
 
 type NavItem = { href: Route; label: string };
 
+// Determines navigation items based on user role and token status.
 function navItemsFor(profile: SessionProfile | null, hasVotingToken: boolean): NavItem[] {
   const items: NavItem[] = [{ href: '/', label: 'Home' }];
 
@@ -30,6 +31,7 @@ export function SiteHeader() {
   const [hasVotingToken, setHasVotingToken] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
 
+  // Memoized function to refresh session and token state.
   const refresh = useCallback(async () => {
     const nextProfile = await getSessionProfile();
     const votingToken = getVotingToken();
@@ -38,6 +40,7 @@ export function SiteHeader() {
     setAuthenticated(Boolean(nextProfile) || Boolean(votingToken));
   }, []);
 
+  // Effect to refresh state on mount and on auth state changes.
   useEffect(() => {
     refresh();
     const { data } = supabaseClient.auth.onAuthStateChange(() => {
@@ -50,7 +53,7 @@ export function SiteHeader() {
 
   async function handleLogout() {
     await signOut();
-    await refresh();
+    await refresh(); // Refresh state after logout
     router.push('/login');
   }
 
@@ -62,7 +65,11 @@ export function SiteHeader() {
         <BrandLogo />
         <nav className="flex items-center gap-2 md:gap-4">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className="rounded-full px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-full px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
               {item.label}
             </Link>
           ))}
@@ -76,7 +83,10 @@ export function SiteHeader() {
             </button>
           ) : (
             <>
-              <Link href="/login" className="rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700">
+              <Link
+                href="/login"
+                className="rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+              >
                 Login
               </Link>
             </>

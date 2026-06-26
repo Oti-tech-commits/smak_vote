@@ -4,7 +4,6 @@ import type { NextRequest } from 'next/server';
 const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
-
   "style-src 'self' 'unsafe-inline' https:",
   "img-src 'self' data: https:",
   "font-src 'self' https:",

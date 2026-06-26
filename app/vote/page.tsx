@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { authHeaders, getVotingToken, hasVoterAccess } from '@/lib/clientAuth';
+import { authHeaders, getVotingToken, hasVoterAccess, VOTING_TOKEN_KEY } from '@/lib/clientAuth';
 
 import type { Election, Position, Candidate } from '@/lib/types';
 
@@ -119,6 +119,13 @@ export default function VotePage() {
     });
     const result = await response.json();
     setMessage(result.message ?? result.error ?? 'Unable to submit vote.');
+    if (!response.ok && (response.status === 401 || response.status === 403)) {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(VOTING_TOKEN_KEY);
+      }
+      router.replace('/login?redirect=/vote' as Route);
+      return;
+    }
     if (response.ok) {
       setSubmitted(true);
     }
@@ -141,6 +148,7 @@ export default function VotePage() {
         <Card>
           <h2 className="text-xl font-semibold">No active election available.</h2>
           <p className="mt-3 text-slate-600">Check back when the next prefect election is open.</p>
+          <Button onClick={() => router.push('/' as Route)} className="mt-4">Back to Home</Button>
         </Card>
       </section>
     );

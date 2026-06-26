@@ -1,8 +1,9 @@
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { rateLimit, getClientIp } from '@/lib/rateLimit';
-import { registerSchema } from '@/lib/validators';
+
 import { requireProfile, unauthorizedResponse } from '@/lib/auth';
+import { registerSchema } from '@/lib/validators';
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
   }
   const { full_name, student_number, email, class_name, password } = parsed.data;
 
-
+  // Check for duplicate email or student number
   const { data: existingProfile, error: existingProfileError } = await supabaseServer
     .from('profiles')
     .select('id')
@@ -36,11 +37,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'A user with this email or student number already exists.' }, { status: 409 });
   }
 
-
+  // Create user in auth.users
   const { data, error } = await supabaseServer.auth.admin.createUser({
     email,
     password,
-    email_confirm: true,
+    email_confirm: true, // Auto-confirm email
     user_metadata: { full_name, student_number, class_name, role: 'student' }
   });
 
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error?.message || 'Failed to create user.' }, { status: 500 });
   }
 
+  // Create profile in public.profiles
   const { error: profileError } = await supabaseServer.from('profiles').upsert({
     id: data.user.id,
     email,
@@ -58,6 +60,7 @@ export async function POST(request: Request) {
   });
 
   if (profileError) {
+    // If profile creation fails, roll back the auth user creation
     await supabaseServer.auth.admin.deleteUser(data.user.id);
     return NextResponse.json({ error: profileError.message }, { status: 500 });
   }
