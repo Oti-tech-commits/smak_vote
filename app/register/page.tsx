@@ -1,6 +1,5 @@
 'use client';
-import { useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,15 +9,30 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { AuthGuard } from '@/components/auth-guard';
-import { authHeaders } from '@/lib/clientAuth';
+import { authHeaders, getSessionProfile } from '@/lib/clientAuth';
+import type { UserRole } from '@/lib/types';
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 function RegisterForm() {
   const [message, setMessage] = useState<string | null>(null);
+  const [callerRole, setCallerRole] = useState<UserRole | null>(null);
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema)
+    resolver: zodResolver(registerSchema),
+    defaultValues: { role: 'student' }
   });
+
+  useEffect(() => {
+    let active = true;
+    getSessionProfile().then((profile) => {
+      if (active) {
+        setCallerRole(profile?.role ?? null);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function onSubmit(values: RegisterFormValues) {
     setMessage(null);
@@ -35,8 +49,8 @@ function RegisterForm() {
       return;
     }
 
-    setMessage('Student account created successfully.');
-    reset();
+    setMessage(result.message || 'Account created successfully.');
+    reset({ role: 'student' });
   }
 
   return (
@@ -49,8 +63,12 @@ function RegisterForm() {
       <Card>
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-semibold text-slate-900">Register a Student</h1>
-            <p className="mt-2 text-sm text-slate-600">Officers and admins can register a student account here.</p>
+            <h1 className="text-3xl font-semibold text-slate-900">{callerRole === 'admin' ? 'Register a User' : 'Register a Student'}</h1>
+            <p className="mt-2 text-sm text-slate-600">
+              {callerRole === 'admin'
+                ? 'Admins can register student or election officer accounts here.'
+                : 'Officers can register student accounts here.'}
+            </p>
           </div>
           <form className="grid gap-5" onSubmit={handleSubmit(onSubmit)}>
             <div>
@@ -78,8 +96,22 @@ function RegisterForm() {
               <Input id="password" type="password" {...register('password')} />
               {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
             </div>
+            {callerRole === 'admin' && (
+              <div>
+                <Label htmlFor="role">Account Role</Label>
+                <select
+                  id="role"
+                  className="w-full rounded-md border border-slate-200 bg-white px-4 py-2"
+                  {...register('role')}
+                >
+                  <option value="student">Student</option>
+                  <option value="officer">Election Officer</option>
+                </select>
+                {errors.role && <p className="mt-2 text-sm text-red-600">{errors.role.message}</p>}
+              </div>
+            )}
             <Button type="submit" disabled={isSubmitting} className="w-full">
-              Register Student
+              {callerRole === 'admin' ? 'Create Account' : 'Register Student'}
             </Button>
             {message && <p className="text-sm text-slate-700">{message}</p>}
           </form>

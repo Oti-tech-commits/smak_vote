@@ -20,7 +20,16 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid registration data.' }, { status: 400 });
   }
-  const { full_name, student_number, email, class_name, password } = parsed.data;
+  const { full_name, student_number, email, class_name, password, role } = parsed.data;
+
+  // Only admins may create officer accounts; officers can register students only.
+  let assignedRole: 'student' | 'officer' = 'student';
+  if (role === 'officer') {
+    if (caller.role !== 'admin') {
+      return NextResponse.json({ error: 'Only admins can register officers.' }, { status: 403 });
+    }
+    assignedRole = 'officer';
+  }
 
   // Check for duplicate email or student number
   const { data: existingProfile, error: existingProfileError } = await supabaseServer
@@ -42,7 +51,7 @@ export async function POST(request: Request) {
     email,
     password,
     email_confirm: true, // Auto-confirm email
-    user_metadata: { full_name, student_number, class_name, role: 'student' }
+    user_metadata: { full_name, student_number, class_name, role: assignedRole }
   });
 
   if (error || !data.user) {
@@ -56,7 +65,7 @@ export async function POST(request: Request) {
     student_number,
     full_name,
     class_name,
-    role: 'student'
+    role: assignedRole
   });
 
   if (profileError) {
@@ -65,5 +74,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: profileError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ message: 'Registration successful. Check your email to confirm your account.' });
+  const label = assignedRole === 'officer' ? 'Officer' : 'Student';
+  return NextResponse.json({ message: `${label} account created successfully. The account can sign in immediately with the email and password provided.` });
 }

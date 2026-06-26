@@ -20,7 +20,8 @@ export const registerSchema = z.object({
   student_number: z.string().min(3),
   email: z.string().email(),
   class_name: z.string().min(1),
-  password: z.string().min(8)
+  password: z.string().min(8),
+  role: z.enum(['student', 'officer']).optional()
 });
 
 export const electionSchema = z.object({

@@ -15,7 +15,7 @@ function navItemsFor(profile: SessionProfile | null, hasVotingToken: boolean): N
   const items: NavItem[] = [{ href: '/', label: 'Home' }];
 
   if (profile?.role === 'admin') {
-    items.push({ href: '/admin', label: 'Admin' }, { href: '/register', label: 'Register Student' }, { href: '/results', label: 'Results' });
+    items.push({ href: '/admin', label: 'Admin' }, { href: '/register', label: 'Register Users' }, { href: '/results', label: 'Results' });
   } else if (profile?.role === 'officer') {
     items.push({ href: '/officer', label: 'Officer' }, { href: '/register', label: 'Register Student' }, { href: '/results', label: 'Results' });
   } else if (profile || hasVotingToken) {
