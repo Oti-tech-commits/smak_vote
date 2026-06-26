@@ -15,10 +15,13 @@ export default function HomePage() {
               <Link href="/login" className="inline-flex items-center justify-center rounded-md bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-700">
                 Login to Vote
               </Link>
-              <Link href="/register" className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
-                Register as Student
+              <Link href="/results" className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
+                View Results
               </Link>
             </div>
+            <p className="mt-6 text-sm leading-6 text-slate-500">
+              Officers and administrators: sign in with your school email to manage elections, register students, and publish results. Student accounts are created by officers and admins — there is no public self-registration.
+            </p>
           </div>
           <div className="flex flex-col items-center gap-5 rounded-3xl bg-gradient-to-br from-brand-50 via-white to-accent-50 p-8">
             <img src="/logo.png" alt="St. Mark’s S.S. Naminya crest" className="h-44 w-44 object-contain sm:h-52 sm:w-52" />

@@ -119,8 +119,9 @@ export default function LoginPage() {
       <Card>
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-semibold text-slate-900">Student Login</h1>
-            <p className="mt-2 text-sm text-slate-600">Use your student number, school email, or voting token.</p>
+            <h1 className="text-3xl font-semibold text-slate-900">Sign In</h1>
+            <p className="mt-2 text-sm text-slate-600">Students: use your student number, school email, or voting token.</p>
+            <p className="mt-1 text-sm text-slate-600">Officers &amp; admins: use the <span className="font-semibold">School Email</span> tab with your staff email and password.</p>
           </div>
           <div className="flex flex-wrap gap-3">
             {['student', 'email', 'token'].map((option) => (
