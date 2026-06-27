@@ -16,12 +16,14 @@
 
 
 ## Part 3 — Publish results to all users
-- [ ] 9) Allow unauthenticated viewing of published results only: update `app/api/results/route.ts` to not block on missing access when elections are published; update `app/results/page.tsx` to remove forced redirect to `/login` for unauthenticated users.
+- [x] 9) Allow unauthenticated viewing of published results only: update `app/api/results/route.ts` to not block on missing access when elections are published; update `app/results/page.tsx` to remove forced redirect to `/login` for unauthenticated users.
+
 
 ## Part 4 — Bulk student import UI for admin & officer
-- [ ] 10) Ensure API route `app/api/admin/students/import/route.ts` supports CSV/XLSX multipart upload, parses required columns, creates auth users + profiles as `student`, idempotently skips existing student_numbers, returns summary JSON, and writes `audit_logs`.
-- [ ] 11) Add "Bulk Import Students" card to `components/admin-panel.tsx` and upload control to `app/officer/page.tsx`. Ensure POST uses auth headers and re-runs stats fetch.
+- [x] 10) Ensure API route `app/api/admin/students/import/route.ts` supports CSV/XLSX multipart upload, parses required columns, creates auth users + profiles as `student`, idempotently skips existing student_numbers, returns summary JSON, and writes `audit_logs`.
+- [x] 11) Add "Bulk Import Students" card to `components/admin-panel.tsx` and upload control to `app/officer/page.tsx`. Ensure POST uses auth headers and re-runs stats fetch.
 - [ ] 12) Update `DEPLOYMENT.md` or `README.md` documenting expected column headers and new in-UI bulk import.
+
 
 ## FINAL verification
 - [ ] Run `npm run lint`, `npm test`, and `npm run build` and ensure all pass.
