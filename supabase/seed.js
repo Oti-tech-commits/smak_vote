@@ -35,7 +35,7 @@ async function main() {
   let userId = userResponse.user?.id;
   if (!userId) {
     const { data } = await supabase.auth.admin.listUsers();
-    const admin = data.find((user) => user.email === adminEmail);
+    const admin = data.users.find((user) => user.email === adminEmail);
     if (!admin) throw new Error('Failed to find created admin user');
     userId = admin.id;
   }
