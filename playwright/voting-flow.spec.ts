@@ -7,11 +7,34 @@ test.describe('Student Voting Flow', () => {
     await page.goto(BASE_URL);
   });
 
-  test('should register a new student', async ({ page }) => {
-    await page.click('a:text("Register as Student")');
-    await expect(page).toHaveURL(/register/);
+test('should register a new student', async ({ page }) => {
+    // Login as admin/officer so AuthGuard allows /register
+    await page.click('a:text("Login to Vote")');
+    await expect(page).toHaveURL(/login/);
+
+    // Email/password mode
+    await page.click('button:text("School Email")');
+
+    const adminEmail = process.env.SEED_ADMIN_EMAIL;
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+    if (!adminEmail || !adminPassword) {
+      throw new Error('Missing SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD env vars for admin login');
+    }
+
+    await page.fill('input#email', adminEmail);
+    await page.fill('input#password', adminPassword);
+    await page.click('button:text("Login")');
+
+    // After admin login, go to registration page
+    await page.goto(`${BASE_URL}/register`);
+    await page.waitForURL(/register|login/);
+
+    if (!page.url().includes('/register')) {
+      throw new Error(`AuthGuard blocked /register. Landed on: ${page.url()}`);
+    }
 
     // Fill registration form
+    await page.waitForSelector('input#full_name', { timeout: 30000 });
     await page.fill('input#full_name', 'Test Student');
     await page.fill('input#student_number', 'TS2024001');
     await page.fill('input#class_name', 'SS3A');
@@ -19,10 +42,10 @@ test.describe('Student Voting Flow', () => {
     await page.fill('input#password', 'TestPassword123!');
 
     // Submit form
-    await page.click('button:text("Create Account")');
+    await page.click('button:text("Register Account")');
 
     // Should show success message
-    await expect(page.locator('text=Registration successful')).toBeVisible();
+    await expect(page.locator('text=account created successfully')).toBeVisible({ timeout: 10000 });
   });
 
   test('should login with email and password', async ({ page }) => {

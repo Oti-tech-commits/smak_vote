@@ -4,7 +4,7 @@ import type { Route } from 'next';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
-import { dashboardPathForRole, getSessionProfile } from '@/lib/clientAuth';
+import { dashboardPathForRole, getSessionProfile, hasVoterAccess } from '@/lib/clientAuth';
 import type { UserRole } from '@/lib/types';
 
 type GuardStatus = 'loading' | 'authorized' | 'denied';
@@ -22,6 +22,12 @@ export function AuthGuard({ allow, children }: { allow: UserRole[]; children: Re
         return;
       }
       if (!profile) {
+        // Token-based voters (no Supabase session) should still be able to access /vote.
+        if (pathname === '/vote' && (await hasVoterAccess())) {
+          setStatus('authorized');
+          return;
+        }
+
         setStatus('denied');
         router.replace(`/login?redirect=${encodeURIComponent(pathname)}` as Route);
         return;

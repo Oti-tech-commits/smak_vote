@@ -42,15 +42,6 @@ export default function LoginPage() {
       return;
     }
 
-    if (mode === 'student') {
-      const sn = values.studentNumber?.trim() ?? '';
-      if (!sn || sn.length < 3) {
-        setMessage('Student number must be at least 3 characters.');
-        return;
-      }
-    }
-
-
     if (mode === 'email' && !values.email) {
       setMessage('Email is required for email login.');
       return;
@@ -81,10 +72,15 @@ export default function LoginPage() {
 
       let email = values.email;
       if (mode === 'student' && values.studentNumber) {
+        const sn = values.studentNumber.trim();
+        if (sn.length < 3) {
+          setMessage('Student number must be at least 3 characters.');
+          return;
+        }
         const response = await fetch('/api/auth/lookup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ student_number: values.studentNumber })
+          body: JSON.stringify({ student_number: sn })
         });
         const result = await response.json();
         if (!response.ok) {
@@ -101,7 +97,7 @@ export default function LoginPage() {
       }
 
       const profile = await getSessionProfile();
-      const destination = getRedirectParam() ?? (profile ? dashboardPathForRole(profile.role) : '/vote');
+      const destination = getRedirectParam() ?? (profile ? dashboardPathForRole(profile.role) : '/');
       setMessage('Login successful. Redirecting to your dashboard...');
       window.location.href = destination;
     } catch (error) {
