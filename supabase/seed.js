@@ -26,7 +26,11 @@ async function main() {
     user_metadata: { role: 'admin', full_name: 'Election Administrator', student_number: adminStudentNumber, class_name: 'Staff' }
   });
 
-  if (userResponse.error && userResponse.error.message.includes('already exists')) {
+  if (
+    userResponse.error &&
+    (userResponse.error.code === 'email_exists' ||
+      userResponse.error.message.toLowerCase().includes('already'))
+  ) {
     console.log('Admin user already exists.');
   } else if (userResponse.error) {
     throw userResponse.error;
