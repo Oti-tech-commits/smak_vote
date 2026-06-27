@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { authHeaders, hasVoterAccess } from '@/lib/clientAuth';
+import { authHeaders } from '@/lib/clientAuth';
 import type { Election, Position, Candidate } from '@/lib/types';
 
 interface CandidateWithVotes extends Candidate {
@@ -21,49 +21,36 @@ interface ElectionWithResults extends Election {
 
 export default function ResultsPage() {
   const router = useRouter();
-  const [authChecked, setAuthChecked] = useState(false);
   const [elections, setElections] = useState<ElectionWithResults[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     async function load() {
-      if (!(await hasVoterAccess())) {
-        if (active) {
-          router.replace('/login?redirect=/results' as Route);
+      try {
+        // Published results are public; only attach auth headers if available.
+        const headers = await authHeaders();
+        const response = await fetch('/api/results', { headers });
+        const result = await response.json();
+        if (!active) return;
+        if (response.ok) {
+          setElections(result.elections ?? []);
+        } else {
+          setError(result.error || 'Unable to load results at this time.');
         }
-        return;
-      }
-      if (active) {
-        setAuthChecked(true);
-      }
-      const headers = await authHeaders();
-      const response = await fetch('/api/results', { headers });
-      const result = await response.json();
-      if (!active) {
-        return;
-      }
-      if (response.ok) {
-        setElections(result.elections ?? []);
-      } else {
-        setError(result.error || 'Unable to load results at this time.');
+      } catch {
+        if (active) {
+          setError('Unable to load results at this time.');
+        }
       }
     }
     load();
     return () => {
       active = false;
     };
-  }, [router]);
+  }, []);
 
-  if (!authChecked) {
-    return (
-      <section className="mx-auto max-w-6xl px-6 py-16 lg:px-8">
-        <Card>
-          <p className="text-sm text-slate-600">Verifying your access…</p>
-        </Card>
-      </section>
-    );
-  }
+
 
   if (error) {
     return (

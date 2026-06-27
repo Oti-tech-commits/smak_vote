@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,18 +11,35 @@ import { Card } from '@/components/ui/card';
 import { AuthGuard } from '@/components/auth-guard';
 import { authHeaders } from '@/lib/clientAuth';
 
-type RegisterFormValues = z.infer<typeof registerSchema>;
+// Choice for handling the orphaned /api/admin/students route:
+// Option (b): keep /api/admin/students and point this page to it,
+// adding a role selector (student/officer) since /api/auth/register only creates
+// student accounts while /api/admin/students can create officer accounts.
+
+const extendedSchema = registerSchema.extend({
+  role: z.enum(['student', 'officer'])
+});
+
+type RegisterFormValues = z.infer<typeof extendedSchema>;
 
 function RegisterForm() {
   const [message, setMessage] = useState<string | null>(null);
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema)
+    resolver: zodResolver(extendedSchema),
+    defaultValues: {
+      full_name: '',
+      student_number: '',
+      class_name: '',
+      email: '',
+      password: '',
+      role: 'student'
+    }
   });
 
   async function onSubmit(values: RegisterFormValues) {
     setMessage(null);
 
-    const response = await fetch('/api/auth/register', {
+    const response = await fetch('/api/admin/students', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify(values)
@@ -35,9 +51,10 @@ function RegisterForm() {
       return;
     }
 
-    setMessage('Student account created successfully.');
+    setMessage(`${values.role === 'officer' ? 'Officer' : 'Student'} account created successfully.`);
     reset();
   }
+
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-16 lg:px-8">
@@ -49,8 +66,8 @@ function RegisterForm() {
       <Card>
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-semibold text-slate-900">Register a Student</h1>
-            <p className="mt-2 text-sm text-slate-600">Officers and admins can register a student account here.</p>
+            <h1 className="text-3xl font-semibold text-slate-900">Register Student / Officer</h1>
+            <p className="mt-2 text-sm text-slate-600">Officers and admins can register a student or officer account here.</p>
           </div>
           <form className="grid gap-5" onSubmit={handleSubmit(onSubmit)}>
             <div>
@@ -69,6 +86,18 @@ function RegisterForm() {
               {errors.class_name && <p className="mt-2 text-sm text-red-600">{errors.class_name.message}</p>}
             </div>
             <div>
+              <Label htmlFor="role">Role</Label>
+              <select
+                id="role"
+                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-600"
+                {...register('role')}
+              >
+                <option value="student">Student</option>
+                <option value="officer">Election Officer</option>
+              </select>
+              {errors.role && <p className="mt-2 text-sm text-red-600">{errors.role.message}</p>}
+            </div>
+            <div>
               <Label htmlFor="email">School Email</Label>
               <Input id="email" type="email" {...register('email')} />
               {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>}
@@ -79,7 +108,7 @@ function RegisterForm() {
               {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
             </div>
             <Button type="submit" disabled={isSubmitting} className="w-full">
-              Register Student
+              Register Account
             </Button>
             {message && <p className="text-sm text-slate-700">{message}</p>}
           </form>

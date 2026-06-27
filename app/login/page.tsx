@@ -138,28 +138,32 @@ export default function LoginPage() {
             {mode === 'student' && (
               <div>
                 <Label htmlFor="studentNumber">Student Number</Label>
-                <Input id="studentNumber" {...register('studentNumber')} placeholder="e.g. S12345" />
+                <Input id="studentNumber" autoComplete="username" {...register('studentNumber')} placeholder="e.g. S12345" />
+
                 {errors.studentNumber && <p className="mt-2 text-sm text-red-600">{errors.studentNumber.message}</p>}
               </div>
             )}
             {mode === 'email' && (
               <div>
                 <Label htmlFor="email">School Email</Label>
-                <Input id="email" type="email" {...register('email')} placeholder="student@stmark.com" />
+                <Input id="email" type="email" autoComplete="username" {...register('email')} placeholder="student@stmark.com" />
+
                 {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>}
               </div>
             )}
             {mode === 'token' && (
               <div>
                 <Label htmlFor="token">Voting Token</Label>
-                <Input id="token" {...register('token')} placeholder="Single-use token" />
+                <Input id="token" autoComplete="one-time-code" {...register('token')} placeholder="Single-use token" />
+
                 {errors.token && <p className="mt-2 text-sm text-red-600">{errors.token.message}</p>}
               </div>
             )}
             {mode !== 'token' && (
               <div>
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" {...register('password')} placeholder="Enter your password" />
+                <Input id="password" type="password" autoComplete="current-password" {...register('password')} placeholder="Enter your password" />
+
                 {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
               </div>
             )}

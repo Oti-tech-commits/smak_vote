@@ -47,6 +47,10 @@ describe('Auth Helpers', () => {
             single: vi.fn().mockResolvedValueOnce({
               data: mockProfile,
               error: null
+            }),
+            maybeSingle: vi.fn().mockResolvedValueOnce({
+              data: mockProfile,
+              error: null
             })
           })
         })
@@ -78,6 +82,10 @@ describe('Auth Helpers', () => {
         select: vi.fn().mockReturnValueOnce({
           eq: vi.fn().mockReturnValueOnce({
             single: vi.fn().mockResolvedValueOnce({
+              data: null,
+              error: new Error('Profile not found')
+            }),
+            maybeSingle: vi.fn().mockResolvedValueOnce({
               data: null,
               error: new Error('Profile not found')
             })
@@ -113,7 +121,8 @@ describe('Auth Helpers', () => {
       vi.mocked(supabaseServer.from).mockReturnValueOnce({
         select: vi.fn().mockReturnValueOnce({
           eq: vi.fn().mockReturnValueOnce({
-            single: vi.fn().mockResolvedValueOnce({ data: { id: 'user-123', role }, error: null })
+            single: vi.fn().mockResolvedValueOnce({ data: { id: 'user-123', role }, error: null }),
+            maybeSingle: vi.fn().mockResolvedValueOnce({ data: { id: 'user-123', role }, error: null })
           })
         })
       } as any);

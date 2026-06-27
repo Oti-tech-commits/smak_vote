@@ -1,11 +1,13 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { AdminPanel } from '@/components/admin-panel';
 import { AuthGuard } from '@/components/auth-guard';
 import { authHeaders } from '@/lib/clientAuth';
 import type { Election } from '@/lib/types';
+
 
 type ElectionSummary = Pick<Election, 'id' | 'status' | 'title'>;
 
@@ -19,15 +21,22 @@ function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats>({ students: 0, votes: 0, elections: [] });
   const [downloadMessage, setDownloadMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadStats() {
+  async function loadStats() {
+    try {
       const headers = await authHeaders();
       const response = await fetch('/api/admin/stats', { headers });
       if (response.ok) {
         setStats(await response.json());
       }
+    } catch (error) {
+      console.error('Failed to load admin stats:', error);
     }
+  }
+
+  useEffect(() => {
     loadStats();
+    const id = setInterval(loadStats, 10000);
+    return () => clearInterval(id);
   }, []);
 
   async function downloadReport(path: string, filename: string) {
@@ -52,9 +61,22 @@ function AdminDashboard() {
   return (
     <section className="mx-auto max-w-6xl px-6 py-16 lg:px-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold text-slate-900">Admin Dashboard</h1>
-        <p className="mt-2 text-slate-600">Manage prefect elections, student registrations, and audit reports.</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold text-slate-900">Admin Dashboard</h1>
+            <p className="mt-2 text-slate-600">Manage prefect elections, student registrations, and audit reports.</p>
+          </div>
+          <div className="sm:flex sm:items-center sm:justify-end">
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            >
+              Register Student
+            </Link>
+          </div>
+        </div>
       </div>
+
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Total Students</p>
@@ -92,7 +114,7 @@ function AdminDashboard() {
           </div>
         </Card>
       </div>
-      <AdminPanel />
+      <AdminPanel onImportSuccess={loadStats} />
     </section>
   );
 }

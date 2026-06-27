@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { getVoterAccess, unauthorizedResponse } from '@/lib/auth';
+// getVoterAccess is intentionally not used for published results (public).
+
 import type { Election, Position, Candidate } from '@/lib/types';
 
 interface PositionWithResults extends Position {
@@ -16,10 +17,10 @@ interface ElectionWithResults extends Election {
 }
 
 export async function GET(request: Request) {
-  const access = await getVoterAccess(request);
-  if (!access) {
-    return unauthorizedResponse();
-  }
+  // Published results are public.
+  // We intentionally do NOT block on missing voter access.
+
+
 
   const { data: elections, error } = await supabaseServer
     .from('elections')

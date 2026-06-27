@@ -20,7 +20,9 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   const expiresAt = data?.expires_at ? new Date(data.expires_at) : null;
-  const isExpired = !expiresAt || Number.isNaN(expiresAt.valueOf()) || expiresAt < new Date();
+  const isExpired = expiresAt ? (Number.isNaN(expiresAt.valueOf()) || expiresAt < new Date()) : false;
+
+
 
   if (
     error ||
