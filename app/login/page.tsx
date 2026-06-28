@@ -1,7 +1,7 @@
 'use client';
 
 import type { Route } from 'next';
-import { useState, useMemo } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -16,7 +16,7 @@ import { Card } from '@/components/ui/card';
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [message, setMessage] = useState<string | null>(null);
@@ -172,5 +172,18 @@ export default function LoginPage() {
         </div>
       </Card>
     </section>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    // Wrap the form in a Suspense boundary to handle client-side rendering with useSearchParams
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-3xl px-6 py-16 lg:px-8">Loading...</div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
