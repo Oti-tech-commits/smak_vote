@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import type { Route } from 'next';
+import { useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,20 +16,19 @@ import { Card } from '@/components/ui/card';
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-function getRedirectParam(): string | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  const redirect = new URLSearchParams(window.location.search).get('redirect');
-  if (redirect && redirect.startsWith('/')) {
-    return redirect;
-  }
-  return null;
-}
-
 export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [message, setMessage] = useState<string | null>(null);
   const [mode, setMode] = useState<'student' | 'email' | 'token'>('student');
+
+  const redirectParam = useMemo(() => {
+    const redirect = searchParams.get('redirect');
+    if (redirect && redirect.startsWith('/')) {
+      return redirect;
+    }
+    return null;
+  }, [searchParams]);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -63,7 +64,7 @@ export default function LoginPage() {
         if (response.ok) {
           window.localStorage.setItem(VOTING_TOKEN_KEY, values.token);
           setMessage('Voting token validated. Redirecting to ballot...');
-          window.location.href = getRedirectParam() ?? '/vote';
+          router.push((redirectParam ?? '/vote') as Route);
         } else {
           setMessage(result.error ?? 'Invalid voting token.');
         }
@@ -97,9 +98,9 @@ export default function LoginPage() {
       }
 
       const profile = await getSessionProfile();
-      const destination = getRedirectParam() ?? (profile ? dashboardPathForRole(profile.role) : '/');
+      const destination = redirectParam ?? (profile ? dashboardPathForRole(profile.role) : '/');
       setMessage('Login successful. Redirecting to your dashboard...');
-      window.location.href = destination;
+      router.push(destination as Route);
     } catch (error) {
       setMessage('Unable to complete login.');
     }
