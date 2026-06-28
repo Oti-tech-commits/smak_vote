@@ -1,7 +1,6 @@
 'use client';
 
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,17 +31,13 @@ export function AdminPanel({ onImportSuccess }: AdminPanelProps) {
   const [tokenForm, setTokenForm] = useState({ election_id: '', student_number: '', email: '', expires_at: '' });
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  async function getAuthHeaders(): Promise<HeadersInit> {
+  const getAuthHeaders = useCallback(async (): Promise<HeadersInit> => {
     const session = await supabaseClient.auth.getSession();
     const token = session.data.session?.access_token;
     return token ? { Authorization: `Bearer ${token}` } : {};
-  }
+  }, []);
 
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     const headers = await getAuthHeaders();
     const [electionsRes, positionsRes, candidatesRes, tokensRes] = await Promise.all([
       fetch('/api/admin/elections', { headers }),
@@ -54,7 +49,11 @@ export function AdminPanel({ onImportSuccess }: AdminPanelProps) {
     if (positionsRes.ok) setPositions(await positionsRes.json());
     if (candidatesRes.ok) setCandidates(await candidatesRes.json());
     if (tokensRes.ok) setTokens(await tokensRes.json());
-  }
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   async function createElection(event: React.FormEvent) {
     event.preventDefault();
