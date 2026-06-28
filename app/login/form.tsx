@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,7 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const [message, setMessage] = useState<string | null>(null);
   const [mode, setMode] = useState<'student' | 'email' | 'token'>('student');
+  const [isLoading, setIsLoading] = useState(false);
 
   const redirectParam = useMemo(() => {
     const redirect = searchParams.get('redirect');
@@ -30,13 +32,14 @@ export function LoginForm() {
     return null;
   }, [searchParams]);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { studentNumber: '', email: '', password: '', token: '' }
   });
 
   async function onSubmit(values: LoginFormValues) {
     setMessage(null);
+    setIsLoading(true);
 
     if (mode === 'token' && !values.token) {
       setMessage('Voting token is required for token login.');
@@ -103,13 +106,15 @@ export function LoginForm() {
       router.push(destination as Route);
     } catch (error) {
       setMessage('Unable to complete login.');
+    } finally {
+      setIsLoading(false);
     }
   }
 
   return (
     <section className="mx-auto max-w-3xl px-6 py-16 lg:px-8">
       <div className="mb-8 flex flex-col items-center text-center">
-        <img src="/logo.png" alt="St. Mark’s S.S. Naminya crest" className="h-20 w-20 object-contain" />
+        <Image src="/logo.png" alt="St. Mark’s S.S. Naminya crest" width={80} height={80} className="h-20 w-20 object-contain" />
         <p className="mt-3 text-lg font-semibold text-slate-900">St. Mark’s S.S. Naminya</p>
         <p className="text-xs font-medium uppercase tracking-[0.3em] text-accent-600">Desire to Excel</p>
       </div>
@@ -160,8 +165,16 @@ export function LoginForm() {
                 {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
               </div>
             )}
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {mode === 'token' ? 'Validate Token' : 'Login'}
+            <Button type="submit" disabled={isLoading} className="w-full">
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </>
+              ) : mode === 'token' ? 'Validate Token' : 'Login'}
             </Button>
             {message && <p className="text-sm text-slate-700">{message}</p>}
           </form>

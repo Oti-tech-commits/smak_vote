@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { supabaseClient } from '@/lib/supabaseClient';
+import { StudentImportForm } from '@/components/student-import-form';
 import type { Election, Position, Candidate, VotingToken } from '@/lib/types';
 
 interface AdminPanelProps {
@@ -28,8 +29,6 @@ export function AdminPanel({ onImportSuccess }: AdminPanelProps) {
   const [candidateForm, setCandidateForm] = useState({ student_name: '', class_name: '', manifesto: '', position_id: '', photo: null as File | null });
   const [positionForm, setPositionForm] = useState({ title: '', max_votes: '1', election_id: '' });
   const [tokenForm, setTokenForm] = useState({ election_id: '', student_number: '', email: '', expires_at: '' });
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [importMessage, setImportMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -175,48 +174,6 @@ export function AdminPanel({ onImportSuccess }: AdminPanelProps) {
     setTokenMessage(result.message || result.error || 'Token deleted.');
     setIsLoading(false);
     if (response.ok) fetchData();
-  }
-
-  async function handleBulkImport(event: React.FormEvent) {
-    event.preventDefault();
-    if (!importFile) return;
-    setImportMessage(null);
-    setIsLoading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', importFile);
-
-      const headers = await getAuthHeaders();
-      const response = await fetch('/api/admin/students/import', {
-        method: 'POST',
-        headers,
-        body: formData
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        setImportMessage(
-          `Import complete!\n` +
-          `Created: ${result.created}\n` +
-          `Skipped: ${result.skipped}\n` +
-          `Already exists: ${result.exists}\n` +
-          (result.errors && result.errors.length > 0 ? `Errors:\n${result.errors.join('\n')}` : '')
-        );
-        setImportFile(null);
-        const fileInput = document.getElementById('import_file') as HTMLInputElement;
-        if (fileInput) fileInput.value = '';
-        
-        onImportSuccess?.();
-        fetchData();
-      } else {
-        setImportMessage(result.error || 'Import failed.');
-      }
-    } catch (error: any) {
-      setImportMessage(error.message || 'An error occurred during import.');
-    } finally {
-      setIsLoading(false);
-    }
   }
 
   return (
@@ -376,18 +333,7 @@ export function AdminPanel({ onImportSuccess }: AdminPanelProps) {
         </div>
       </Card>
 
-      <Card>
-        <h2 className="text-2xl font-semibold text-slate-900">Bulk Import Students</h2>
-        <p className="mt-2 text-sm text-slate-600">Upload a CSV or XLSX file to bulk import student accounts.</p>
-        <form className="grid gap-4 pt-6" onSubmit={handleBulkImport}>
-          <div>
-            <Label htmlFor="import_file">Select File (.csv, .xlsx)</Label>
-            <Input id="import_file" type="file" accept=".csv,.xlsx" onChange={(e) => setImportFile(e.target.files?.[0] ?? null)} required />
-          </div>
-          <Button type="submit" disabled={isLoading || !importFile}>Import Students</Button>
-          {importMessage && <div className="rounded-md border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700 whitespace-pre-wrap">{importMessage}</div>}
-        </form>
-      </Card>
+      <StudentImportForm onSuccess={() => { onImportSuccess?.(); fetchData(); }} />
 
       <Card>
         <h2 className="text-2xl font-semibold text-slate-900">Manage Elections</h2>
