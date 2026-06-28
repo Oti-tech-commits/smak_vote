@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
+import Image from 'next/image';
 import { supabaseClient } from '@/lib/supabaseClient';
 import { StudentImportForm } from '@/components/student-import-form';
 import type { Election, Position, Candidate, VotingToken } from '@/lib/types';
@@ -274,7 +275,7 @@ export function AdminPanel({ onImportSuccess }: AdminPanelProps) {
               <div key={candidate.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                 <div className="flex gap-4">
                   {candidate.photo_url && (
-                    <img src={candidate.photo_url} alt={candidate.student_name} className="h-16 w-16 rounded-full object-cover" />
+                    <Image src={candidate.photo_url} alt={candidate.student_name} width={64} height={64} className="h-16 w-16 rounded-full object-cover" />
                   )}
                   <div className="flex-1">
                     <p className="font-semibold text-slate-900">{candidate.student_name}</p>

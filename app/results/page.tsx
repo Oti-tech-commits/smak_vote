@@ -3,6 +3,7 @@
 import type { Route } from 'next';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { authHeaders } from '@/lib/clientAuth';
@@ -95,7 +96,7 @@ export default function ResultsPage() {
                       <div key={candidate.id} className={`rounded-2xl p-4 ${isWinner ? 'bg-green-50 border-green-400 border' : 'bg-slate-50'}`}>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
-                            <img src={candidate.photo_url} alt={candidate.student_name} className="h-12 w-12 rounded-full object-cover" />
+                            <Image src={candidate.photo_url} alt={candidate.student_name} width={48} height={48} className="h-12 w-12 rounded-full object-cover" />
                             <div>
                               <p className="font-semibold text-slate-800">{candidate.student_name}</p>
                               <p className="text-sm text-slate-500">{candidate.class_name}</p>
@@ -123,4 +124,3 @@ export default function ResultsPage() {
     </section>
   );
 }
-

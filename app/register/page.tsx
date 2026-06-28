@@ -7,6 +7,7 @@ import { registerSchema } from '@/lib/validators';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { AuthGuard } from '@/components/auth-guard';
 import { authHeaders } from '@/lib/clientAuth';
@@ -59,7 +60,7 @@ function RegisterForm() {
   return (
     <section className="mx-auto max-w-3xl px-6 py-16 lg:px-8">
       <div className="mb-8 flex flex-col items-center text-center">
-        <img src="/logo.png" alt="St. Mark’s S.S. Naminya crest" className="h-20 w-20 object-contain" />
+        <Image src="/logo.png" alt="St. Mark’s S.S. Naminya crest" width={80} height={80} className="h-20 w-20 object-contain" />
         <p className="mt-3 text-lg font-semibold text-slate-900">St. Mark’s S.S. Naminya</p>
         <p className="text-xs font-medium uppercase tracking-[0.3em] text-accent-600">Desire to Excel</p>
       </div>
