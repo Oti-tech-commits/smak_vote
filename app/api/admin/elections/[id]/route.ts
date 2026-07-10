@@ -3,6 +3,9 @@ import { supabaseServer } from '@/lib/supabaseServer';
 import { getUserProfileFromToken, unauthorizedResponse } from '@/lib/auth';
 import type { RouteParams } from '@/lib/types';
 
+export const runtime = 'edge';
+
+
 export async function PATCH(request: Request, { params }: { params: Promise<RouteParams> }) {
   const { id } = await params;
   const token = request.headers.get('authorization')?.replace('Bearer ', '') || null;

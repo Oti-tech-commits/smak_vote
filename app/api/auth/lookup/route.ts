@@ -2,6 +2,10 @@ import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 
+export const runtime = 'edge';
+
+
+
 export async function POST(request: Request) {
   const ip = getClientIp(request);
   if (!rateLimit(`lookup:${ip}`, 10, 60_000)) {

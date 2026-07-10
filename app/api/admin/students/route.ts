@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { getUserProfileFromToken, unauthorizedResponse } from '@/lib/auth';
 
+export const runtime = 'edge';
+
+
+
 export async function POST(request: Request) {
   const token = request.headers.get('authorization')?.replace('Bearer ', '') || null;
   const profile = await getUserProfileFromToken(token);
