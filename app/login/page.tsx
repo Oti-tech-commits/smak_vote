@@ -1,6 +1,7 @@
 'use client';
 
 import type { Route } from 'next';
+import { Suspense } from 'react';
 import { useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -16,7 +17,7 @@ import { Card } from '@/components/ui/card';
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [message, setMessage] = useState<string | null>(null);
@@ -109,8 +110,8 @@ export default function LoginPage() {
   return (
     <section className="mx-auto max-w-3xl px-6 py-16 lg:px-8">
       <div className="mb-8 flex flex-col items-center text-center">
-        <img src="/logo.png" alt="St. Mark’s S.S. Naminya crest" className="h-20 w-20 object-contain" />
-        <p className="mt-3 text-lg font-semibold text-slate-900">St. Mark’s S.S. Naminya</p>
+        <img src="/logo.png" alt="St. Mark's S.S. Naminya crest" className="h-20 w-20 object-contain" />
+        <p className="mt-3 text-lg font-semibold text-slate-900">St. Mark's S.S. Naminya</p>
         <p className="text-xs font-medium uppercase tracking-[0.3em] text-accent-600">Desire to Excel</p>
       </div>
       <Card>
@@ -172,5 +173,13 @@ export default function LoginPage() {
         </div>
       </Card>
     </section>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-3xl px-6 py-16">Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
