@@ -15,8 +15,8 @@ export default function HomePage() {
               <Link href="/login" className="inline-flex items-center justify-center rounded-md bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-700">
                 Login to Vote
               </Link>
-              <Link href="/register" className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
-                Register as Student
+              <Link href="/results" className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
+                View Results
               </Link>
             </div>
           </div>

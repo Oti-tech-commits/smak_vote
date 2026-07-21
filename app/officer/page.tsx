@@ -5,9 +5,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { AuthGuard } from '@/components/auth-guard';
 import { authHeaders } from '@/lib/clientAuth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { AdminPanel } from '@/components/admin-panel';
 
 interface OfficerStats {
   users: number;
@@ -20,50 +18,6 @@ interface OfficerStats {
 
 function OfficerDashboard() {
   const [stats, setStats] = useState<OfficerStats>({ users: 0, votes: 0 });
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [importMessage, setImportMessage] = useState<string | null>(null);
-  const [isImportLoading, setIsImportLoading] = useState(false);
-
-  async function handleBulkImport(event: React.FormEvent) {
-    event.preventDefault();
-    if (!importFile) return;
-    setImportMessage(null);
-    setIsImportLoading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', importFile);
-
-      const headers = await authHeaders();
-      const response = await fetch('/api/admin/students/import', {
-        method: 'POST',
-        headers,
-        body: formData
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-        setImportMessage(
-          `Import complete!\n` +
-          `Created: ${result.created}\n` +
-          `Skipped: ${result.skipped}\n` +
-          `Already exists: ${result.exists}\n` +
-          (result.errors && result.errors.length > 0 ? `Errors:\n${result.errors.join('\n')}` : '')
-        );
-        setImportFile(null);
-        const fileInput = document.getElementById('officer_import_file') as HTMLInputElement;
-        if (fileInput) fileInput.value = '';
-        
-        loadStats();
-      } else {
-        setImportMessage(result.error || 'Import failed.');
-      }
-    } catch (error: any) {
-      setImportMessage(error.message || 'An error occurred during import.');
-    } finally {
-      setIsImportLoading(false);
-    }
-  }
 
   async function loadStats() {
     try {
@@ -112,6 +66,7 @@ function OfficerDashboard() {
           <p className="mt-4 text-4xl font-semibold text-slate-900">{stats.votes}</p>
         </Card>
       </div>
+
       <Card>
         <h2 className="text-xl font-semibold text-slate-900">Realtime Turnout</h2>
         {stats.turnout ? (
@@ -124,19 +79,7 @@ function OfficerDashboard() {
         )}
       </Card>
       
-      <Card>
-        <h2 className="text-xl font-semibold text-slate-900">Bulk Import Students</h2>
-        <p className="mt-2 text-sm text-slate-600">Upload a CSV or XLSX file to bulk import student accounts.</p>
-        <form className="grid gap-4 pt-6" onSubmit={handleBulkImport}>
-          <div>
-            <Label htmlFor="officer_import_file">Select File (.csv, .xlsx)</Label>
-            <Input id="officer_import_file" type="file" accept=".csv,.xlsx" onChange={(e) => setImportFile(e.target.files?.[0] ?? null)} required />
-          </div>
-          <Button type="submit" disabled={isImportLoading || !importFile}>Import Students</Button>
-          {importMessage && <div className="rounded-md border border-brand-100 bg-brand-50 p-3 text-sm text-brand-700 whitespace-pre-wrap">{importMessage}</div>}
-        </form>
-      </Card>
-
+      <AdminPanel role="officer" onImportSuccess={loadStats} />
     </section>
   );
 }

@@ -1,9 +1,10 @@
-export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 // getVoterAccess is intentionally not used for published results (public).
 
 import type { Election, Position, Candidate } from '@/lib/types';
+
+export const dynamic = 'force-dynamic';
 
 interface PositionWithResults extends Position {
   candidates: (Candidate & { vote_count: number })[];

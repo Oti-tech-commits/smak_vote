@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { getUserProfileFromToken, unauthorizedResponse } from '@/lib/auth';
 
-export const runtime = 'edge';
 
 
 

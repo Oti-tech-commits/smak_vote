@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { requireProfile, unauthorizedResponse } from '@/lib/auth';
 
-export const runtime = 'edge';
 
 
 export async function GET(request: Request) {

@@ -9,7 +9,6 @@ import { registerSchema } from '@/lib/validators';
 // adding a role selector (student/officer) since `/api/auth/register` only
 // creates `student` while `/api/admin/students` can create both `student` and `officer`.
 
-export const runtime = 'edge';
 
 
 

@@ -114,7 +114,7 @@ function AdminDashboard() {
           </div>
         </Card>
       </div>
-      <AdminPanel onImportSuccess={loadStats} />
+      <AdminPanel role="admin" onImportSuccess={loadStats} />
     </section>
   );
 }

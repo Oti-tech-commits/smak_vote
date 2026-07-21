@@ -1,5 +1,7 @@
 'use client';
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,12 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { AuthGuard } from '@/components/auth-guard';
-import { authHeaders } from '@/lib/clientAuth';
-
-// Choice for handling the orphaned /api/admin/students route:
-// Option (b): keep /api/admin/students and point this page to it,
-// adding a role selector (student/officer) since /api/auth/register only creates
-// student accounts while /api/admin/students can create officer accounts.
+import { authHeaders, getSessionProfile } from '@/lib/clientAuth';
 
 const extendedSchema = registerSchema.extend({
   role: z.enum(['student', 'officer'])
@@ -24,6 +21,8 @@ type RegisterFormValues = z.infer<typeof extendedSchema>;
 
 function RegisterForm() {
   const [message, setMessage] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<'admin' | 'officer' | null>(null);
+
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<RegisterFormValues>({
     resolver: zodResolver(extendedSchema),
     defaultValues: {
@@ -35,6 +34,16 @@ function RegisterForm() {
       role: 'student'
     }
   });
+
+  useEffect(() => {
+    async function loadRole() {
+      const profile = await getSessionProfile();
+      if (profile && (profile.role === 'admin' || profile.role === 'officer')) {
+        setUserRole(profile.role);
+      }
+    }
+    loadRole();
+  }, []);
 
   async function onSubmit(values: RegisterFormValues) {
     setMessage(null);
@@ -55,7 +64,6 @@ function RegisterForm() {
     reset();
   }
 
-
   return (
     <section className="mx-auto max-w-3xl px-6 py-16 lg:px-8">
       <div className="mb-8 flex flex-col items-center text-center">
@@ -65,9 +73,19 @@ function RegisterForm() {
       </div>
       <Card>
         <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-semibold text-slate-900">Register Student / Officer</h1>
-            <p className="mt-2 text-sm text-slate-600">Officers and admins can register a student or officer account here.</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-950">Register Student / Officer</h1>
+              <p className="mt-1 text-sm text-slate-500">Create new student or election officer accounts manually.</p>
+            </div>
+            {userRole && (
+              <Link
+                href={userRole === 'admin' ? '/admin' : '/officer'}
+                className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 shadow-sm"
+              >
+                Back to Dashboard
+              </Link>
+            )}
           </div>
           <form className="grid gap-5" onSubmit={handleSubmit(onSubmit)}>
             <div>

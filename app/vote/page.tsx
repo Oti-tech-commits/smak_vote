@@ -119,14 +119,20 @@ export default function VotePage() {
     });
     const result = await response.json();
     setMessage(result.message ?? result.error ?? 'Unable to submit vote.');
-    if (!response.ok && (response.status === 401 || response.status === 403)) {
-      if (typeof window !== 'undefined') {
-        window.localStorage.removeItem(VOTING_TOKEN_KEY);
+    if (!response.ok) {
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          window.localStorage.removeItem(VOTING_TOKEN_KEY);
+        }
+        router.replace('/login?redirect=/vote' as Route);
+        return;
       }
-      router.replace('/login?redirect=/vote' as Route);
-      return;
-    }
-    if (response.ok) {
+      if (response.status === 403) {
+        if (result.error && result.error.toLowerCase().includes('token') && typeof window !== 'undefined') {
+          window.localStorage.removeItem(VOTING_TOKEN_KEY);
+        }
+      }
+    } else {
       setSubmitted(true);
     }
     setSubmitting(false);

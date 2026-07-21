@@ -3,6 +3,57 @@ import { supabaseServer } from '@/lib/supabaseServer';
 import { requireProfile, unauthorizedResponse } from '@/lib/auth';
 import ExcelJS from 'exceljs';
 
+export const dynamic = 'force-dynamic';
+
+// Helper function to validate email structure
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Robust CSV parser supporting quotes, nested commas, and line endings
+function parseCSV(text: string): string[][] {
+  const lines: string[][] = [];
+  let row: string[] = [];
+  let cell = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const next = text[i + 1];
+
+    if (c === '"') {
+      if (inQuotes && next === '"') {
+        cell += '"';
+        i++; // skip next quote
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (c === ',' && !inQuotes) {
+      row.push(cell.trim());
+      cell = '';
+    } else if ((c === '\r' || c === '\n') && !inQuotes) {
+      if (c === '\r' && next === '\n') i++;
+      row.push(cell.trim());
+      if (row.some(x => x.length > 0)) {
+        lines.push(row);
+      }
+      row = [];
+      cell = '';
+    } else {
+      cell += c;
+    }
+  }
+
+  if (cell || row.length > 0) {
+    row.push(cell.trim());
+    if (row.some(x => x.length > 0)) {
+      lines.push(row);
+    }
+  }
+
+  return lines;
+}
+
 export async function POST(request: Request) {
   const profile = await requireProfile(request, ['admin', 'officer']);
   if (!profile) {
@@ -10,6 +61,9 @@ export async function POST(request: Request) {
   }
 
   try {
+    const url = new URL(request.url);
+    const isPreview = url.searchParams.get('preview') === 'true';
+
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     if (!file) {
@@ -19,11 +73,7 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer as ArrayBuffer);
 
-
-
-
     let parsedRows: any[] = [];
-    let skipped = 0;
     const fileName = file.name.toLowerCase();
 
     if (fileName.endsWith('.xlsx')) {
@@ -62,70 +112,236 @@ export async function POST(request: Request) {
         const password = getValue('password', 4);
 
         if (full_name || student_number || email || class_name || password) {
-          if (full_name && student_number && email && class_name && password) {
-            parsedRows.push({ full_name, student_number, email, class_name, password });
-          } else {
-            skipped += 1;
-          }
+          parsedRows.push({
+            full_name: full_name.trim(),
+            student_number: student_number.trim(),
+            email: email.trim(),
+            class_name: class_name.trim(),
+            password: password.trim()
+          });
         }
       });
+
+      // Header validation
+      const required = ['full_name', 'student_number', 'email', 'class_name', 'password'];
+      const missing = required.filter(h => !headers.includes(h));
+      if (missing.length > 0) {
+        return NextResponse.json({
+          error: `Header validation failed. Missing required columns: ${missing.join(', ')}. Found headers: ${headers.join(', ')}`
+        }, { status: 400 });
+      }
+
     } else if (fileName.endsWith('.csv')) {
       const text = buffer.toString('utf-8');
-      const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
-      if (lines.length > 0) {
-        const headers = lines.shift()!.split(',').map(h => h.trim().replace(/^["']|["']$/g, '').toLowerCase());
-        const fullNameIdx = headers.indexOf('full_name');
-        const studentNumberIdx = headers.indexOf('student_number');
-        const emailIdx = headers.indexOf('email');
-        const classNameIdx = headers.indexOf('class_name');
-        const passwordIdx = headers.indexOf('password');
+      const allLines = parseCSV(text);
+      if (allLines.length === 0) {
+        return NextResponse.json({ error: 'The uploaded CSV file is empty.' }, { status: 400 });
+      }
 
-        for (const line of lines) {
-          const cols = line.split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
-          const getValue = (idx: number, fallbackIdx: number) => {
-            const finalIdx = idx !== -1 ? idx : fallbackIdx;
-            return cols[finalIdx] ?? '';
-          };
+      const headers = allLines.shift()!.map(h => h.toLowerCase());
+      const required = ['full_name', 'student_number', 'email', 'class_name', 'password'];
+      const missing = required.filter(h => !headers.includes(h));
+      if (missing.length > 0) {
+        return NextResponse.json({
+          error: `Header validation failed. Missing required columns: ${missing.join(', ')}. Found headers: ${headers.join(', ')}`
+        }, { status: 400 });
+      }
 
-          const full_name = getValue(fullNameIdx, 0);
-          const student_number = getValue(studentNumberIdx, 1);
-          const email = getValue(emailIdx, 2);
-          const class_name = getValue(classNameIdx, 3);
-          const password = getValue(passwordIdx, 4);
+      const fullNameIdx = headers.indexOf('full_name');
+      const studentNumberIdx = headers.indexOf('student_number');
+      const emailIdx = headers.indexOf('email');
+      const classNameIdx = headers.indexOf('class_name');
+      const passwordIdx = headers.indexOf('password');
 
-          if (full_name || student_number || email || class_name || password) {
-            if (full_name && student_number && email && class_name && password) {
-              parsedRows.push({ full_name, student_number, email, class_name, password });
-            } else {
-              skipped += 1;
-            }
-          }
+      for (const cols of allLines) {
+        const getValue = (idx: number, fallbackIdx: number) => {
+          return cols[idx] ?? '';
+        };
+
+        const full_name = getValue(fullNameIdx, 0);
+        const student_number = getValue(studentNumberIdx, 1);
+        const email = getValue(emailIdx, 2);
+        const class_name = getValue(classNameIdx, 3);
+        const password = getValue(passwordIdx, 4);
+
+        if (full_name || student_number || email || class_name || password) {
+          parsedRows.push({
+            full_name: full_name.trim(),
+            student_number: student_number.trim(),
+            email: email.trim(),
+            class_name: class_name.trim(),
+            password: password.trim()
+          });
         }
       }
     } else {
       return NextResponse.json({ error: 'Unsupported file format. Please upload a .csv or .xlsx file.' }, { status: 400 });
     }
 
+    // Fetch existing database profiles to check for conflicts
+    const { data: dbProfiles, error: dbError } = await supabaseServer
+      .from('profiles')
+      .select('email, student_number');
+
+    if (dbError) {
+      return NextResponse.json({ error: `Failed to query database for duplicates: ${dbError.message}` }, { status: 500 });
+    }
+
+    const dbEmails = new Set((dbProfiles || []).map(p => p.email.toLowerCase()));
+    const dbStudentNumbers = new Set((dbProfiles || []).map(p => p.student_number.toLowerCase()));
+
+    // Track duplicates inside the uploaded file
+    const fileEmails = new Set<string>();
+    const fileStudentNumbers = new Set<string>();
+    const duplicateEmailsInFile = new Set<string>();
+    const duplicateStudentNumbersInFile = new Set<string>();
+
+    for (const row of parsedRows) {
+      const emailLower = row.email.toLowerCase();
+      const snLower = row.student_number.toLowerCase();
+      if (emailLower) {
+        if (fileEmails.has(emailLower)) {
+          duplicateEmailsInFile.add(emailLower);
+        }
+        fileEmails.add(emailLower);
+      }
+      if (snLower) {
+        if (fileStudentNumbers.has(snLower)) {
+          duplicateStudentNumbersInFile.add(snLower);
+        }
+        fileStudentNumbers.add(snLower);
+      }
+    }
+
+    // Process rows & run validation
+    const processedRows = parsedRows.map((student, index) => {
+      const emailLower = student.email.toLowerCase();
+      const snLower = student.student_number.toLowerCase();
+
+      // Check missing fields
+      const missingFields = [];
+      if (!student.full_name) missingFields.push('full_name');
+      if (!student.student_number) missingFields.push('student_number');
+      if (!student.email) missingFields.push('email');
+      if (!student.class_name) missingFields.push('class_name');
+      if (!student.password) missingFields.push('password');
+
+      if (missingFields.length > 0) {
+        return {
+          ...student,
+          status: 'invalid',
+          message: `Missing required field(s): ${missingFields.join(', ')}`
+        };
+      }
+
+      // Format validations
+      if (!isValidEmail(student.email)) {
+        return {
+          ...student,
+          status: 'invalid',
+          message: 'Invalid email format'
+        };
+      }
+
+      if (student.student_number.length < 3) {
+        return {
+          ...student,
+          status: 'invalid',
+          message: 'Student number must be at least 3 characters'
+        };
+      }
+
+      if (student.password.length < 6) {
+        return {
+          ...student,
+          status: 'invalid',
+          message: 'Password must be at least 6 characters'
+        };
+      }
+
+      // Check file duplicates
+      if (duplicateEmailsInFile.has(emailLower)) {
+        return {
+          ...student,
+          status: 'duplicate_in_file',
+          message: `Duplicate email '${student.email}' in this file`
+        };
+      }
+
+      if (duplicateStudentNumbersInFile.has(snLower)) {
+        return {
+          ...student,
+          status: 'duplicate_in_file',
+          message: `Duplicate student number '${student.student_number}' in this file`
+        };
+      }
+
+      // Check database duplicates
+      if (dbEmails.has(emailLower)) {
+        return {
+          ...student,
+          status: 'duplicate_in_db',
+          message: `Email '${student.email}' already exists in database`
+        };
+      }
+
+      if (dbStudentNumbers.has(snLower)) {
+        return {
+          ...student,
+          status: 'duplicate_in_db',
+          message: `Student number '${student.student_number}' already exists in database`
+        };
+      }
+
+      return {
+        ...student,
+        status: 'valid',
+        message: 'Valid'
+      };
+    });
+
+    const summary = {
+      total: processedRows.length,
+      valid: processedRows.filter(r => r.status === 'valid').length,
+      invalid: processedRows.filter(r => r.status === 'invalid').length,
+      duplicate_file: processedRows.filter(r => r.status === 'duplicate_in_file').length,
+      duplicate_db: processedRows.filter(r => r.status === 'duplicate_in_db').length
+    };
+
+    if (isPreview) {
+      return NextResponse.json({
+        preview: processedRows,
+        summary
+      });
+    }
+
+    // Write mode: Import valid rows
     let created = 0;
     let exists = 0;
+    let skipped = 0;
     const errors: string[] = [];
 
-    for (const student of parsedRows) {
+    for (const student of processedRows) {
+      if (student.status === 'duplicate_in_db') {
+        exists++;
+        continue;
+      }
+
+      if (student.status !== 'valid') {
+        skipped++;
+        continue;
+      }
+
       try {
-        // Idempotent: skip students that already have a profile
-        const { data: existingProfile, error: profileErr } = await supabaseServer
+        // Double check database existence just in case of race conditions
+        const { data: checkProfile } = await supabaseServer
           .from('profiles')
           .select('id')
           .eq('student_number', student.student_number)
           .maybeSingle();
 
-        if (profileErr) {
-          errors.push(`Error checking existence of ${student.student_number}: ${profileErr.message}`);
-          continue;
-        }
-
-        if (existingProfile) {
-          exists += 1;
+        if (checkProfile) {
+          exists++;
           continue;
         }
 
@@ -143,7 +359,7 @@ export async function POST(request: Request) {
         });
 
         if (authError) {
-          errors.push(`Error creating auth user for ${student.email}: ${authError.message}`);
+          errors.push(`Row ${student.student_number} (${student.email}): Auth creation error: ${authError.message}`);
           continue;
         }
 
@@ -160,15 +376,15 @@ export async function POST(request: Request) {
         });
 
         if (insertErr) {
-          errors.push(`Error creating profile for ${student.email}: ${insertErr.message}`);
+          errors.push(`Row ${student.student_number} (${student.email}): Profile db insert error: ${insertErr.message}`);
           // Rollback auth user creation
           await supabaseServer.auth.admin.deleteUser(userId);
           continue;
         }
 
-        created += 1;
+        created++;
       } catch (studentErr: any) {
-        errors.push(`Unexpected error for ${student.email || student.student_number}: ${studentErr.message || studentErr}`);
+        errors.push(`Row ${student.student_number} (${student.email}): Unexpected error: ${studentErr.message || studentErr}`);
       }
     }
 
@@ -176,9 +392,8 @@ export async function POST(request: Request) {
     await supabaseServer.from('audit_logs').insert({
       user_id: profile.id,
       action: 'student_bulk_import',
-      details: { created, exists, skipped, errors_count: errors.length }
+      details: { created, exists, skipped, errors_count: errors.length, filename: file.name }
     });
-
 
     return NextResponse.json({ created, skipped, exists, errors });
   } catch (err: any) {
