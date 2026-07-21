@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function HomePage() {
   return (
@@ -21,7 +22,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="flex flex-col items-center gap-5 rounded-3xl bg-gradient-to-br from-brand-50 via-white to-accent-50 p-8">
-            <img src="/logo.png" alt="St. Mark’s S.S. Naminya crest" className="h-44 w-44 object-contain sm:h-52 sm:w-52" />
+            <Image src="/logo.png" alt="St. Mark’s S.S. Naminya crest" width={208} height={208} className="h-44 w-44 object-contain sm:h-52 sm:w-52" />
             <p className="text-base font-semibold uppercase tracking-[0.35em] text-brand-700">Desire to Excel</p>
           </div>
         </div>
