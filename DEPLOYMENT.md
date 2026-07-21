@@ -62,10 +62,10 @@ git push -u origin main
 4. Authorize GitHub
 5. Select `smak-vote` repository
 6. Configure build settings:
-   - **Framework preset:** Next.js
-   - **Build command:** `npm run build`
-   - **Build output directory:** `.next`
-   - **Node version:** 18
+   - **Framework preset:** Next.js (Static HTML Export)
+   - **Build command:** `npm run cf:build`
+   - **Build output directory:** `.open-next`
+   - **Node version:** 22
 
 ### Step 3: Set Environment Variables
 
@@ -204,9 +204,9 @@ Set up basic monitoring:
 
 ```bash
 # Clean and rebuild
-rm -rf node_modules .next
+rm -rf node_modules .next .open-next
 npm install
-npm run build
+npm run cf:build
 ```
 
 ### Environment Variables Not Loading

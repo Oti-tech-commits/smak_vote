@@ -27,7 +27,7 @@ npm run supabase:seed
 3) Create Cloudflare Pages project (CLI or dashboard)
 
 Using Cloudflare Dashboard (recommended):
-- Pages → Create project → Connect GitHub → select `smak-vote` → build command `npm run build` → output `.next`
+- Pages → Create project → Connect GitHub → select `smak-vote` → build command `npm run cf:build` → output directory `.open-next` → Node version 22
 
 Using Wrangler (optional):
 

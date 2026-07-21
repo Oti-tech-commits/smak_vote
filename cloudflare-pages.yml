@@ -1,6 +1,7 @@
 build:
-  command: npm install && npm run build
+  command: npm install && npm run cf:build
   directory: .
+  output_dir: .open-next
 
 functions:
   directory: .
