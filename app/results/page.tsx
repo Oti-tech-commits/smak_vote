@@ -1,6 +1,9 @@
 'use client';
 
+export const runtime = 'edge';
+
 import type { Route } from 'next';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';

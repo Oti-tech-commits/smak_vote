@@ -9,6 +9,10 @@ import { registerSchema } from '@/lib/validators';
 // adding a role selector (student/officer) since `/api/auth/register` only
 // creates `student` while `/api/admin/students` can create both `student` and `officer`.
 
+export const runtime = 'edge';
+
+
+
 export async function POST(request: Request) {
   const ip = getClientIp(request);
   if (!rateLimit(`admin_register:${ip}`, 10, 60_000)) {

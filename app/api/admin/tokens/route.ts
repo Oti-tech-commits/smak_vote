@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { getUserProfileFromToken, unauthorizedResponse } from '@/lib/auth';
 
+export const runtime = 'edge';
+
 export async function GET(request: Request) {
+
   const token = request.headers.get('authorization')?.replace('Bearer ', '') || null;
   const profile = await getUserProfileFromToken(token);
   if (!profile || profile.role !== 'admin') {
@@ -48,13 +51,17 @@ export async function POST(request: Request) {
   }
 
   const tokenValue = crypto.randomUUID();
-  const { data, error } = await supabaseServer.from('voting_tokens').insert({
-    token: tokenValue,
-    election_id,
-    student_id,
-    expires_at: expires_at ? new Date(expires_at).toISOString() : null,
-    used: false
-  }).select().single();
+  const { data, error } = await supabaseServer
+    .from('voting_tokens')
+    .insert({
+      token: tokenValue,
+      election_id,
+      student_id,
+      expires_at: expires_at ? new Date(expires_at).toISOString() : null,
+      used: false
+    })
+    .select()
+    .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
