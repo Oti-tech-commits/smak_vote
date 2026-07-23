@@ -33,11 +33,18 @@ export function SiteHeader() {
 
   // Memoized function to refresh session and token state.
   const refresh = useCallback(async () => {
-    const nextProfile = await getSessionProfile();
-    const votingToken = getVotingToken();
-    setProfile(nextProfile);
-    setHasVotingToken(Boolean(votingToken));
-    setAuthenticated(Boolean(nextProfile) || Boolean(votingToken));
+    try {
+      const nextProfile = await getSessionProfile();
+      const votingToken = getVotingToken();
+      setProfile(nextProfile);
+      setHasVotingToken(Boolean(votingToken));
+      setAuthenticated(Boolean(nextProfile) || Boolean(votingToken));
+    } catch {
+      // Stale/expired session – clear it to prevent repeated 401 errors
+      setProfile(null);
+      setAuthenticated(Boolean(getVotingToken()));
+      supabaseClient.auth.signOut().catch(() => {});
+    }
   }, []);
 
   // Effect to refresh state on mount and on auth state changes.
