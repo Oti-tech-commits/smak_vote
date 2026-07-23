@@ -1,13 +1,9 @@
-# Build Fix - TODO
+# Placeholder Implementation Progress
 
-## Steps
-- [x] 1. Analyze build failure - ERESOLVE dependency conflict with @cloudflare/next-on-pages
-- [x] 2. Get user approval on plan
-- [x] 3. Edit `package.json` - Add `@cloudflare/workers-types@^5` to devDependencies
-- [x] 4. Edit `cloudflare-pages.yml` - Fix build command and output directory
-- [x] 5. Update `DEPLOYMENT.md` and `DEPLOY_CLI_STEPS.md` to reflect correct build commands
-- [ ] 6. **MANUAL STEP** - User must update Cloudflare Pages dashboard settings:
-       - Build command: `npm run cf:build`
-       - Build output directory: `.open-next`
-       - Node version: 22
-
+## ✅ 1. Create `app/api/auth/register/route.ts` — Student self-registration endpoint
+## ✅ 2. Fix `app/api/admin/elections/[id]/route.ts` — Use `requireProfile`
+## ✅ 3. Fix `app/api/admin/candidates/route.ts` — Use `requireProfile`
+## ✅ 4. Fix `app/api/admin/tokens/route.ts` — Use `requireProfile`
+## ✅ 5. Fix `app/api/admin/tokens/[id]/route.ts` — Use `requireProfile`
+## ✅ 6. Clean up `app/api/auth/token/route.ts` — Dead code removed, proper error handling added
+## ✅ 7. Verify — Running lint + build

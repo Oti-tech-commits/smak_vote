@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -107,6 +108,7 @@ export function AdminPanel({ role: initialRole, onImportSuccess }: AdminPanelPro
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   async function getAuthHeaders(): Promise<HeadersInit> {
@@ -666,7 +668,7 @@ export function AdminPanel({ role: initialRole, onImportSuccess }: AdminPanelPro
                     return (
                       <div key={candidate.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex gap-4 items-start shadow-sm hover:shadow transition-shadow">
                         {candidate.photo_url ? (
-                          <img src={candidate.photo_url} alt={candidate.student_name} className="h-16 w-16 rounded-full object-cover border border-slate-300" />
+                          <Image src={candidate.photo_url} alt={candidate.student_name} width={64} height={64} className="h-16 w-16 rounded-full object-cover border border-slate-300" />
                         ) : (
                           <div className="h-16 w-16 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold">Photo</div>
                         )}

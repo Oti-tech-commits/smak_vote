@@ -8,21 +8,20 @@ export async function GET(request: Request) {
     return unauthorizedResponse();
   }
 
+  // admin_stats_report returns: total_students, total_votes, total_elections, total_candidates
   const { data: stats, error } = await supabaseServer.rpc('admin_stats_report').single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Adapt the data for the officer dashboard
-  const typedStats = stats as { students: number; votes: number };
+  const typedStats = stats as { total_students: number; total_votes: number } | null;
   const officerStats = {
-    users: typedStats.students,
-    votes: typedStats.votes
+    users: typedStats?.total_students ?? 0,
+    votes: typedStats?.total_votes ?? 0
   };
 
-  // Officer turnout: compute eligible voters and votes cast from voting status.
-  // Assumes voter_status.has_voted tracks whether the student has already voted.
+  // Officer turnout: compute eligible voters and votes cast from voter_status.
   // Scope turnout to the current open election.
   let activeElection = await supabaseServer
     .from('elections')
@@ -57,7 +56,6 @@ export async function GET(request: Request) {
     }
     votesCast = electionTurnoutRows?.length ?? 0;
   }
-
 
   // Eligible voters = total student profiles.
   const { count: eligibleVoters, error: eligibleError } = await supabaseServer

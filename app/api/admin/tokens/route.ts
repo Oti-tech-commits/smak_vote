@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { getUserProfileFromToken, unauthorizedResponse } from '@/lib/auth';
+import { requireProfile, unauthorizedResponse } from '@/lib/auth';
 
 
 export async function GET(request: Request) {
-
-  const token = request.headers.get('authorization')?.replace('Bearer ', '') || null;
-  const profile = await getUserProfileFromToken(token);
-  if (!profile || profile.role !== 'admin') {
+  const profile = await requireProfile(request, 'admin');
+  if (!profile) {
     return unauthorizedResponse();
   }
 
@@ -24,9 +22,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '') || null;
-  const profile = await getUserProfileFromToken(token);
-  if (!profile || profile.role !== 'admin') {
+  const profile = await requireProfile(request, 'admin');
+  if (!profile) {
     return unauthorizedResponse();
   }
 

@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { getUserProfileFromToken, requireProfile, unauthorizedResponse } from '@/lib/auth';
-
-
+import { requireProfile, unauthorizedResponse } from '@/lib/auth';
 
 export async function GET(request: Request) {
   const profile = await requireProfile(request, 'admin');
@@ -17,9 +15,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '') || null;
-  const profile = await getUserProfileFromToken(token);
-  if (!profile || profile.role !== 'admin') {
+  const profile = await requireProfile(request, 'admin');
+  if (!profile) {
     return unauthorizedResponse();
   }
 
@@ -44,7 +41,6 @@ export async function POST(request: Request) {
   if (photo.size > maxSize) {
     return NextResponse.json({ error: 'Photo size exceeds the 2MB limit.' }, { status: 400 });
   }
-
 
   const fileName = `${crypto.randomUUID()}-${photo.name}`;
   const { data: uploadData, error: uploadError } = await supabaseServer.storage.from('candidate-photos').upload(fileName, photo.stream(), {

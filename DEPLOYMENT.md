@@ -3,6 +3,7 @@
 ## Pre-Deployment Checklist
 
 ### Code Quality
+
 - [ ] `npm run lint` passes without errors
 - [ ] `npm run typecheck` passes without errors
 - [ ] `npm run test` passes with 80%+ coverage
@@ -10,7 +11,8 @@
 - [ ] All secrets in environment variables only
 - [ ] No hardcoded API keys or credentials
 
-### Security
+### Securit
+
 - [ ] CSP headers configured
 - [ ] CORS properly configured
 - [ ] HTTPS enforced
@@ -21,6 +23,7 @@
 - [ ] Audit logging working
 
 ### Database
+
 - [ ] Migrations up to date
 - [ ] Foreign key constraints in place
 - [ ] Indexes optimized
@@ -29,6 +32,7 @@
 - [ ] Connection pooling configured
 
 ### Features
+
 - [ ] Authentication flows working
 - [ ] Voting flows working
 - [ ] Admin CRUD operations working

@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { getUserProfileFromToken, unauthorizedResponse } from '@/lib/auth';
+import { requireProfile, unauthorizedResponse } from '@/lib/auth';
 import type { RouteParams } from '@/lib/types';
-
-
 
 export async function PATCH(request: Request, { params }: { params: Promise<RouteParams> }) {
   const { id } = await params;
-  const token = request.headers.get('authorization')?.replace('Bearer ', '') || null;
-  const profile = await getUserProfileFromToken(token);
-  if (!profile || profile.role !== 'admin') {
+  const profile = await requireProfile(request, 'admin');
+  if (!profile) {
     return unauthorizedResponse();
   }
 
@@ -39,9 +36,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<Rout
 
 export async function DELETE(request: Request, { params }: { params: Promise<RouteParams> }) {
   const { id } = await params;
-  const token = request.headers.get('authorization')?.replace('Bearer ', '') || null;
-  const profile = await getUserProfileFromToken(token);
-  if (!profile || profile.role !== 'admin') {
+  const profile = await requireProfile(request, 'admin');
+  if (!profile) {
     return unauthorizedResponse();
   }
 
